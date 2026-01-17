@@ -3,7 +3,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { Plus, Trash2, Eye, EyeOff, Download, Upload } from 'lucide-react';
 
 function App() {
-  const [parameters, setParameters] = useState(initialValue)[
+  const [parameters, setParameters] = useState([
     { 
       name: 'Glicemia', 
       unit: 'mg/dL',
