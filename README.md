@@ -1,202 +1,260 @@
-# 📊 Tracker Parametri Medici
+# 📊 Medical Tracker v2.0 - Refactored Edition
 
-Web app per monitorare parametri medici nel tempo con visualizzazione grafica e intervalli di riferimento personalizzati.
+> **Nuova versione completamente refactored** con architettura modulare, Tailwind CSS configurato correttamente, React Router e design ottimizzato per mobile.
 
-## ✨ Funzionalità
+![Version](https://img.shields.io/badge/version-2.0.0-blue)
+![React](https://img.shields.io/badge/react-18.2.0-61dafb)
+![Tailwind](https://img.shields.io/badge/tailwind-3.3.6-38bdf8)
 
-- 📈 Grafici a linee interattivi con date sull'asse X e valori sull'asse Y
-- 🎯 Intervalli standard (valori di riferimento popolazione generale)
-- 🔧 Intervalli personalizzati calcolati automaticamente (media ± deviazioni standard)
-- ✏️ Aggiungi, modifica ed elimina misurazioni
-- 👁️ Escludi/includi misurazioni dal calcolo dell'intervallo personalizzato
-- 💾 Salvataggio automatico nel browser (localStorage)
-- 📥 Importa/Esporta dati in formato JSON
-- 📱 Design responsive per mobile e desktop
+## 🆕 Novità Versione 2.0
 
-## 🚀 Come Pubblicare Online - GUIDA COMPLETA
+### ✨ Refactoring Completo
+- ✅ **Architettura modulare** - Componenti separati e riutilizzabili
+- ✅ **Context API** - Gestione dello stato globale centralizzata
+- ✅ **React Router** - Navigazione SPA con 3 pagine (Dashboard, Analisi, Impostazioni)
+- ✅ **Tailwind CSS configurato** - PostCSS + Autoprefixer + theme personalizzato
+- ✅ **Mobile-first design** - **FIX: Padding corretto su mobile** (niente più testo attaccato ai bordi!)
+- ✅ **Animazioni fluide** - Transizioni e micro-interazioni
+- ✅ **Componenti riutilizzabili** - Codice pulito e manutenibile
 
-### Opzione 1: Netlify (CONSIGLIATA - La più semplice)
+### 🎨 Miglioramenti UI/UX
+- Nuova pagina **Analisi** con statistiche dettagliate e trend
+- Pagina **Impostazioni** con info parametri e gestione dati
+- Header con navigazione responsive
+- Card animate con stagger effect
+- Scrollbar personalizzata
+- Colori distintivi per ogni parametro
+- Tooltip migliorati sui grafici
 
-#### Passo 1: Crea un account GitHub
-1. Vai su [github.com](https://github.com)
-2. Clicca su "Sign up" e crea un account gratuito
-3. Verifica la tua email
+### 📱 Fix Mobile
+- **Padding laterale corretto** su tutti gli schermi
+- Responsive grid ottimizzato
+- Touch-friendly buttons
+- Navigazione mobile migliorata
 
-#### Passo 2: Carica il progetto su GitHub
-1. Accedi a GitHub
-2. Clicca sul pulsante "+" in alto a destra → "New repository"
-3. Nome del repository: `medical-tracker-app`
-4. Lascia "Public" selezionato
-5. **NON** selezionare "Add a README file"
-6. Clicca "Create repository"
+## 🚀 Funzionalità
 
-7. **Carica i file:**
-   - Clicca su "uploading an existing file"
-   - Trascina TUTTI i file e cartelle del progetto (tutto il contenuto della cartella `medical-tracker-app`)
-   - Scrivi un messaggio tipo "First commit"
-   - Clicca "Commit changes"
+### Dashboard
+- 📝 Form inserimento misurazioni
+- 📊 Grafico interattivo con range
+- 📋 Lista misurazioni con azioni rapide
+- 💾 Import/Export dati
 
-#### Passo 3: Pubblica con Netlify
-1. Vai su [netlify.com](https://www.netlify.com)
-2. Clicca "Sign up" e scegli "Sign up with GitHub"
-3. Autorizza Netlify ad accedere al tuo GitHub
-4. Clicca "Add new site" → "Import an existing project"
-5. Clicca "Deploy with GitHub"
-6. Seleziona il repository `medical-tracker-app`
-7. **Impostazioni build:**
-   - Build command: `npm run build`
-   - Publish directory: `build`
-8. Clicca "Deploy site"
+### Analisi
+- 📈 Statistiche per parametro (media, min, max)
+- 🔄 Indicatori di trend (su/giù/stabile)
+- 📊 Visualizzazione range standard
+- 📉 Confronto con misurazioni precedenti
 
-**Fatto! 🎉** Dopo 2-3 minuti il tuo sito sarà online!
+### Impostazioni
+- ⚙️ Info parametri configurati
+- 📊 Statistiche storage
+- 🔒 Informazioni privacy
+- 🗑️ Eliminazione dati
 
-Netlify ti darà un URL tipo `https://random-name-12345.netlify.app`
+## 📁 Struttura Progetto
 
-#### Personalizza il nome del sito (opzionale)
-1. Vai in "Site settings" → "Change site name"
-2. Scegli un nome (es: `mio-tracker-medico`)
-3. Il tuo sito sarà: `https://mio-tracker-medico.netlify.app`
-
----
-
-### Opzione 2: Vercel (Alternativa simile a Netlify)
-
-1. Vai su [vercel.com](https://vercel.com)
-2. Sign up con GitHub
-3. Clicca "Add New" → "Project"
-4. Importa il repository `medical-tracker-app`
-5. Clicca "Deploy"
-
----
-
-### Opzione 3: GitHub Pages (Gratis, più tecnico)
-
-1. Nel tuo repository su GitHub, vai in "Settings"
-2. Nella sidebar, clicca "Pages"
-3. In "Source" seleziona "GitHub Actions"
-4. Aggiungi questo file nel repository:
-
-Crea: `.github/workflows/deploy.yml`
-
-```yaml
-name: Deploy to GitHub Pages
-
-on:
-  push:
-    branches: [ main ]
-
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-      - run: npm install
-      - run: npm run build
-      - uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build
+```
+medical-tracker-app-v2/
+├── public/
+│   └── index.html
+├── src/
+│   ├── components/          # Componenti riutilizzabili
+│   │   ├── Chart.jsx
+│   │   ├── DataManager.jsx
+│   │   ├── Header.jsx
+│   │   ├── MeasurementForm.jsx
+│   │   └── MeasurementList.jsx
+│   ├── context/             # State management
+│   │   └── MedicalContext.jsx
+│   ├── pages/               # Pagine SPA
+│   │   ├── Analytics.jsx
+│   │   ├── Dashboard.jsx
+│   │   └── Settings.jsx
+│   ├── App.js               # Router principale
+│   ├── index.js             # Entry point
+│   └── index.css            # Tailwind + custom styles
+├── package.json
+├── tailwind.config.js       # Configurazione Tailwind
+├── postcss.config.js        # PostCSS setup
+└── netlify.toml
 ```
 
-5. Commit il file
-6. Il sito sarà disponibile a: `https://tuo-username.github.io/medical-tracker-app`
-
----
-
-## 💻 Sviluppo Locale
+## 💻 Installazione e Sviluppo
 
 ### Prerequisiti
-- Node.js (versione 14 o superiore)
-- npm (incluso con Node.js)
+- Node.js 14+
+- npm o yarn
 
-### Installazione
+### Setup Locale
 
 ```bash
-# 1. Scarica il progetto
-cd medical-tracker-app
+# 1. Naviga nella cartella
+cd medical-tracker-app-v2
 
-# 2. Installa le dipendenze
+# 2. Installa dipendenze
 npm install
 
-# 3. Avvia il server di sviluppo
+# 3. Avvia dev server
 npm start
+
+# L'app si aprirà su http://localhost:3000
 ```
 
-L'app si aprirà automaticamente nel browser su `http://localhost:3000`
+### Build per Produzione
 
-### Comandi disponibili
+```bash
+npm run build
+```
 
-- `npm start` - Avvia il server di sviluppo
-- `npm run build` - Crea la versione di produzione
-- `npm test` - Esegue i test
-- `npm run eject` - Rimuove l'astrazione di create-react-app (ATTENZIONE: irreversibile)
+Crea la cartella `build/` ottimizzata per il deploy.
 
-## 📝 Personalizzazione
+## 🌐 Deploy su Netlify
 
-### Aggiungere nuovi parametri medici
+### Metodo 1: Deploy automatico da GitHub
 
-Modifica il file `src/App.js` nell'array `parameters`:
+1. Carica il progetto su GitHub
+2. Vai su [netlify.com](https://netlify.com) → "Add new site"
+3. Collega il repository
+4. Le impostazioni sono già configurate in `netlify.toml`
+5. Deploy automatico! 🚀
+
+### Metodo 2: Deploy manuale
+
+```bash
+# 1. Build del progetto
+npm run build
+
+# 2. Drag & drop della cartella build/ su Netlify
+```
+
+## 🎨 Personalizzazione
+
+### Modificare i colori del tema
+
+Edita `tailwind.config.js`:
 
 ```javascript
-const [parameters, setParameters] = useState([
-  { 
-    name: 'Nome Parametro', 
-    unit: 'unità di misura',
-    standardRange: { min: valoreMinimoStandard, max: valoreMassimoStandard },
-    customFormula: 'mean ± 1.5*sd'  // o 'mean ± 2*sd'
+theme: {
+  extend: {
+    colors: {
+      primary: {
+        // Cambia questi valori
+        500: '#0ea5e9',
+        600: '#0284c7',
+        // ...
+      }
+    }
+  }
+}
+```
+
+### Aggiungere nuovi parametri
+
+Edita `src/context/MedicalContext.jsx`:
+
+```javascript
+const [parameters] = useState([
+  {
+    name: 'Nuovo Parametro',
+    unit: 'unità',
+    standardRange: { min: X, max: Y },
+    customFormula: 'mean ± 1.5*sd',
+    color: '#hexcolor'
   },
-  // ... altri parametri
+  // ...
 ]);
 ```
 
-### Modificare la formula personalizzata
+### Modificare le formule personalizzate
 
-Attualmente supportate:
-- `mean ± 1*sd` - Media ± 1 deviazione standard
-- `mean ± 1.5*sd` - Media ± 1.5 deviazioni standard
-- `mean ± 2*sd` - Media ± 2 deviazioni standard
+Supportate attualmente:
+- `mean ± 1*sd`
+- `mean ± 1.5*sd`
+- `mean ± 2*sd`
+
+Per formule più complesse, modifica `calculateCustomRange` in `MedicalContext.jsx`.
+
+## 🔧 Tecnologie Utilizzate
+
+- **React 18** - UI library
+- **React Router v6** - Client-side routing
+- **Tailwind CSS 3** - Utility-first CSS
+- **Recharts** - Grafici interattivi
+- **Lucide React** - Icone moderne
+- **PostCSS + Autoprefixer** - CSS processing
+- **Context API** - State management
+- **localStorage** - Persistenza dati
+
+## 📱 Compatibilità
+
+- ✅ Chrome, Firefox, Safari, Edge (ultime versioni)
+- ✅ iOS Safari 12+
+- ✅ Chrome Android
+- ✅ Responsive: mobile, tablet, desktop
 
 ## 🔒 Privacy e Sicurezza
 
-- **Tutti i dati rimangono nel tuo browser** (localStorage)
-- **Nessun dato viene inviato a server esterni**
-- **Usa Esporta/Importa per fare backup**
-- **I dati vengono persi se cancelli i dati del browser**
-
-## 📦 Tecnologie Utilizzate
-
-- React 18
-- Recharts (grafici)
-- Tailwind CSS (styling)
-- Lucide React (icone)
-- localStorage (persistenza dati)
+- **100% locale** - Nessun server esterno
+- **localStorage** - Dati salvati nel browser
+- **No cookies** - Nessun tracking
+- **Open source** - Codice ispezionabile
 
 ## 🐛 Risoluzione Problemi
 
-### Il sito non funziona dopo il deploy
-1. Controlla che tutti i file siano stati caricati su GitHub
-2. Verifica che il build command sia `npm run build`
-3. Verifica che la publish directory sia `build`
+### Build fallisce su Netlify
 
-### I dati non vengono salvati
-- I dati sono salvati nel browser. Se cambi browser o dispositivo, non li troverai
-- Usa "Esporta" per salvare un backup e "Importa" per ripristinarlo
+Verifica che `netlify.toml` sia presente e configurato correttamente.
 
-### Il grafico non si visualizza
-- Assicurati di aver aggiunto almeno 2 misurazioni per lo stesso parametro
-- Controlla che almeno un range (standard o personalizzato) sia attivato
+### I dati non si salvano
 
-## 📧 Supporto
+Controlla che il browser non sia in modalità "privata" e che localStorage sia abilitato.
 
-Per problemi o suggerimenti, apri una issue su GitHub.
+### Testo attaccato ai bordi su mobile
+
+✅ **RISOLTO** nella v2.0! Il padding è ora corretto grazie a:
+```css
+#root {
+  @apply px-4 sm:px-6 lg:px-8;
+}
+```
+
+### Tailwind non funziona
+
+Assicurati di avere installato le devDependencies:
+```bash
+npm install -D tailwindcss postcss autoprefixer
+```
+
+## 📈 Roadmap Future
+
+- [ ] PWA support (offline mode)
+- [ ] Export PDF reports
+- [ ] Multi-utente con autenticazione
+- [ ] Notifiche e reminder
+- [ ] Grafici comparativi multi-parametro
+- [ ] Integrazione con dispositivi wearable
+
+## 🤝 Contribuire
+
+Questo è un progetto open source. Sentiti libero di:
+- Aprire issue per bug o suggerimenti
+- Proporre pull request
+- Forkare e personalizzare
 
 ## 📄 Licenza
 
-MIT License - Puoi usare, modificare e distribuire liberamente questo progetto.
+MIT License - Libero per uso personale e commerciale
+
+## 💡 Supporto
+
+Per domande o problemi:
+1. Controlla la sezione "Risoluzione Problemi"
+2. Apri una issue su GitHub
+3. Consulta la documentazione di Netlify/React
 
 ---
 
 **Fatto con ❤️ per il monitoraggio della salute**
+
+*Versione 2.0 - Completamente refactored e ottimizzato per mobile*
