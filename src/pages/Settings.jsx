@@ -1,6 +1,7 @@
 import React from 'react';
 import { useMedical } from '../context/MedicalContext';
 import { Info, AlertCircle, Trash2 } from 'lucide-react';
+import ParameterManager from '../components/ParameterManager';
 
 const Settings = () => {
   const { measurements, parameters } = useMedical();
@@ -19,15 +20,18 @@ const Settings = () => {
           Impostazioni
         </h1>
         <p className="text-gray-600">
-          Gestisci le impostazioni e visualizza informazioni sull'app
+          Gestisci parametri, visualizza statistiche e configura l'app
         </p>
       </div>
 
+      {/* Gestione Parametri - NUOVO */}
+      <ParameterManager />
+
       {/* Parametri configurati */}
-      <div className="card mb-6 animate-slide-in">
+      <div className="card mb-6 mt-6 animate-slide-in" style={{ animationDelay: '0.2s' }}>
         <div className="flex items-center gap-3 mb-4">
           <Info className="text-primary-600" size={24} />
-          <h2 className="text-xl font-bold text-gray-900">Parametri Medici Configurati</h2>
+          <h2 className="text-xl font-bold text-gray-900">Riepilogo Parametri Attuali</h2>
         </div>
 
         <div className="space-y-3">
@@ -56,7 +60,7 @@ const Settings = () => {
       </div>
 
       {/* Statistiche storage */}
-      <div className="card mb-6 animate-slide-in" style={{ animationDelay: '0.1s' }}>
+      <div className="card mb-6 animate-slide-in" style={{ animationDelay: '0.3s' }}>
         <div className="flex items-center gap-3 mb-4">
           <AlertCircle className="text-blue-600" size={24} />
           <h2 className="text-xl font-bold text-gray-900">Statistiche Dati</h2>
@@ -94,7 +98,7 @@ const Settings = () => {
       </div>
 
       {/* Privacy e sicurezza */}
-      <div className="card mb-6 animate-slide-in" style={{ animationDelay: '0.2s' }}>
+      <div className="card mb-6 animate-slide-in" style={{ animationDelay: '0.4s' }}>
         <h2 className="text-xl font-bold text-gray-900 mb-4">Privacy e Sicurezza</h2>
         
         <div className="space-y-4">
@@ -131,7 +135,7 @@ const Settings = () => {
       </div>
 
       {/* Zona pericolosa */}
-      <div className="card border-2 border-red-200 animate-slide-in" style={{ animationDelay: '0.3s' }}>
+      <div className="card border-2 border-red-200 animate-slide-in" style={{ animationDelay: '0.5s' }}>
         <h2 className="text-xl font-bold text-red-700 mb-4">Zona Pericolosa</h2>
         
         <div className="p-4 bg-red-50 rounded-lg border border-red-200 mb-4">
@@ -152,8 +156,8 @@ const Settings = () => {
 
       {/* Info versione */}
       <div className="mt-8 text-center text-sm text-gray-500">
-        <p>Medical Tracker v2.0</p>
-        <p className="mt-1">Refactored con React + Tailwind CSS</p>
+        <p>Medical Tracker v2.1</p>
+        <p className="mt-1">Gestione parametri dinamica + Refactoring completo</p>
       </div>
     </div>
   );

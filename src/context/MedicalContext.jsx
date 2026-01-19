@@ -10,48 +10,76 @@ export const useMedical = () => {
   return context;
 };
 
-export const MedicalProvider = ({ children }) => {
-  const [parameters] = useState([
-    { 
-      name: 'Glicemia', 
-      unit: 'mg/dL',
-      standardRange: { min: 70, max: 100 },
-      customFormula: 'mean ± 1.5*sd',
-      color: '#3b82f6'
-    },
-    { 
-      name: 'VES', 
-      unit: 'mm/h',
-      standardRange: { min: 0, max: 20 },
-      customFormula: 'mean ± 2*sd',
-      color: '#8b5cf6'
-    },
-    { 
-      name: 'TSH', 
-      unit: 'mIU/L',
-      standardRange: { min: 0.4, max: 4.0 },
-      customFormula: 'mean ± 1.5*sd',
-      color: '#ec4899'
-    },
-    { 
-      name: 'Colesterolo Totale', 
-      unit: 'mg/dL',
-      standardRange: { min: 0, max: 200 },
-      customFormula: 'mean ± 1.5*sd',
-      color: '#f59e0b'
-    },
-    { 
-      name: 'Emoglobina', 
-      unit: 'g/dL',
-      standardRange: { min: 12, max: 16 },
-      customFormula: 'mean ± 1.5*sd',
-      color: '#10b981'
-    }
-  ]);
+const defaultParameters = [
+  { 
+    id: 'param_1',
+    name: 'Glicemia', 
+    unit: 'mg/dL',
+    standardRange: { min: 70, max: 100 },
+    customFormula: 'mean ± 1.5*sd',
+    color: '#3b82f6'
+  },
+  { 
+    id: 'param_2',
+    name: 'VES', 
+    unit: 'mm/h',
+    standardRange: { min: 0, max: 20 },
+    customFormula: 'mean ± 2*sd',
+    color: '#8b5cf6'
+  },
+  { 
+    id: 'param_3',
+    name: 'TSH', 
+    unit: 'mIU/L',
+    standardRange: { min: 0.4, max: 4.0 },
+    customFormula: 'mean ± 1.5*sd',
+    color: '#ec4899'
+  },
+  { 
+    id: 'param_4',
+    name: 'Colesterolo Totale', 
+    unit: 'mg/dL',
+    standardRange: { min: 0, max: 200 },
+    customFormula: 'mean ± 1.5*sd',
+    color: '#f59e0b'
+  },
+  { 
+    id: 'param_5',
+    name: 'Emoglobina', 
+    unit: 'g/dL',
+    standardRange: { min: 12, max: 16 },
+    customFormula: 'mean ± 1.5*sd',
+    color: '#10b981'
+  }
+];
 
+export const MedicalProvider = ({ children }) => {
+  const [parameters, setParameters] = useState([]);
   const [measurements, setMeasurements] = useState([]);
 
-  // Load from localStorage
+  // Load parameters from localStorage
+  useEffect(() => {
+    const savedParams = localStorage.getItem('medicalParameters');
+    if (savedParams) {
+      try {
+        setParameters(JSON.parse(savedParams));
+      } catch (error) {
+        console.error('Error loading parameters:', error);
+        setParameters(defaultParameters);
+      }
+    } else {
+      setParameters(defaultParameters);
+    }
+  }, []);
+
+  // Save parameters to localStorage
+  useEffect(() => {
+    if (parameters.length > 0) {
+      localStorage.setItem('medicalParameters', JSON.stringify(parameters));
+    }
+  }, [parameters]);
+
+  // Load measurements from localStorage
   useEffect(() => {
     const saved = localStorage.getItem('medicalMeasurements');
     if (saved) {
@@ -63,11 +91,38 @@ export const MedicalProvider = ({ children }) => {
     }
   }, []);
 
-  // Save to localStorage
+  // Save measurements to localStorage
   useEffect(() => {
     localStorage.setItem('medicalMeasurements', JSON.stringify(measurements));
   }, [measurements]);
 
+  // Parameter CRUD operations
+  const addParameter = (parameter) => {
+    const newParam = {
+      ...parameter,
+      id: `param_${Date.now()}`
+    };
+    setParameters(prev => [...prev, newParam]);
+  };
+
+  const updateParameter = (id, updatedData) => {
+    setParameters(prev => prev.map(p => 
+      p.id === id ? { ...p, ...updatedData } : p
+    ));
+  };
+
+  const deleteParameter = (id) => {
+    // Remove parameter
+    setParameters(prev => prev.filter(p => p.id !== id));
+    
+    // Remove all measurements for this parameter
+    const paramToDelete = parameters.find(p => p.id === id);
+    if (paramToDelete) {
+      setMeasurements(prev => prev.filter(m => m.parameter !== paramToDelete.name));
+    }
+  };
+
+  // Measurement operations
   const addMeasurement = (measurement) => {
     setMeasurements(prev => [...prev, {
       ...measurement,
@@ -102,8 +157,8 @@ export const MedicalProvider = ({ children }) => {
     const parameter = parameters.find(p => p.name === parameterName);
     
     let multiplier = 1.5;
-    if (parameter.customFormula.includes('2*sd')) multiplier = 2;
-    if (parameter.customFormula.includes('1*sd')) multiplier = 1;
+    if (parameter?.customFormula.includes('2*sd')) multiplier = 2;
+    if (parameter?.customFormula.includes('1*sd') && !parameter?.customFormula.includes('1.5*sd')) multiplier = 1;
 
     return {
       min: mean - (multiplier * sd),
@@ -114,7 +169,13 @@ export const MedicalProvider = ({ children }) => {
   };
 
   const exportData = () => {
-    const dataStr = JSON.stringify(measurements, null, 2);
+    const dataToExport = {
+      parameters,
+      measurements,
+      exportDate: new Date().toISOString(),
+      version: '2.0'
+    };
+    const dataStr = JSON.stringify(dataToExport, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
@@ -130,7 +191,18 @@ export const MedicalProvider = ({ children }) => {
       reader.onload = (e) => {
         try {
           const importedData = JSON.parse(e.target.result);
-          setMeasurements(importedData);
+          
+          // Check if it's the new format with parameters
+          if (importedData.parameters && importedData.measurements) {
+            setParameters(importedData.parameters);
+            setMeasurements(importedData.measurements);
+          } else if (Array.isArray(importedData)) {
+            // Old format - just measurements
+            setMeasurements(importedData);
+          } else {
+            throw new Error('Invalid file format');
+          }
+          
           resolve();
         } catch (error) {
           reject(error);
@@ -144,6 +216,9 @@ export const MedicalProvider = ({ children }) => {
   const value = {
     parameters,
     measurements,
+    addParameter,
+    updateParameter,
+    deleteParameter,
     addMeasurement,
     removeMeasurement,
     toggleIncludeInFormula,
