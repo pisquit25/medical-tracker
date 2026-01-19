@@ -15,6 +15,8 @@ const defaultParameters = [
     id: 'param_1',
     name: 'Glicemia', 
     unit: 'mg/dL',
+    unitCategory: 'glucose',
+    availableUnits: ['mg/dL', 'mmol/L'],
     standardRange: { min: 70, max: 100 },
     customFormula: 'mean ± 1.5*sd',
     color: '#3b82f6'
@@ -23,6 +25,8 @@ const defaultParameters = [
     id: 'param_2',
     name: 'VES', 
     unit: 'mm/h',
+    unitCategory: 'generic',
+    availableUnits: ['mm/h'],
     standardRange: { min: 0, max: 20 },
     customFormula: 'mean ± 2*sd',
     color: '#8b5cf6'
@@ -31,6 +35,8 @@ const defaultParameters = [
     id: 'param_3',
     name: 'TSH', 
     unit: 'mIU/L',
+    unitCategory: 'thyroid',
+    availableUnits: ['mIU/L', 'µIU/mL'],
     standardRange: { min: 0.4, max: 4.0 },
     customFormula: 'mean ± 1.5*sd',
     color: '#ec4899'
@@ -39,6 +45,8 @@ const defaultParameters = [
     id: 'param_4',
     name: 'Colesterolo Totale', 
     unit: 'mg/dL',
+    unitCategory: 'cholesterol',
+    availableUnits: ['mg/dL', 'mmol/L'],
     standardRange: { min: 0, max: 200 },
     customFormula: 'mean ± 1.5*sd',
     color: '#f59e0b'
@@ -47,6 +55,8 @@ const defaultParameters = [
     id: 'param_5',
     name: 'Emoglobina', 
     unit: 'g/dL',
+    unitCategory: 'hemoglobin',
+    availableUnits: ['g/dL', 'g/L', 'mmol/L'],
     standardRange: { min: 12, max: 16 },
     customFormula: 'mean ± 1.5*sd',
     color: '#10b981'
