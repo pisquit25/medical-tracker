@@ -3,7 +3,7 @@ import { AlertCircle, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useMedical } from '../context/MedicalContext';
 
 const StatusOverview = ({ selectedParameter, onParameterChange }) => {
-  const { measurements, parameters, calculateCustomRange } = useMedical();
+  const { measurements, parameters, calculateCustomRange, removeMeasurement, toggleIncludeInFormula } = useMedical();
   const [currentParam, setCurrentParam] = useState(selectedParameter || (parameters.length > 0 ? parameters[0].name : ''));
 
   // Sincronizza con il parametro selezionato dal grafico
@@ -200,6 +200,11 @@ const StatusOverview = ({ selectedParameter, onParameterChange }) => {
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded ${getStatusText(status.status)}`}>
                         {status.label}
                       </span>
+                      {!measurement.includedInFormula && (
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded bg-gray-200 text-gray-600">
+                          Esclusa
+                        </span>
+                      )}
                     </div>
 
                     {/* Valore misurazione */}
@@ -281,6 +286,32 @@ const StatusOverview = ({ selectedParameter, onParameterChange }) => {
                          status.status === 'warning' ? '!' :
                          '✗'}
                       </span>
+                    </div>
+
+                    {/* Pulsanti azioni */}
+                    <div className="flex flex-col gap-1 mt-2">
+                      <button
+                        onClick={() => toggleIncludeInFormula(measurement.id)}
+                        className={`text-xs px-2 py-1 rounded transition-colors ${
+                          measurement.includedInFormula
+                            ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                        }`}
+                        title={measurement.includedInFormula ? 'Escludi da formula' : 'Includi in formula'}
+                      >
+                        {measurement.includedInFormula ? '📊' : '⊘'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (window.confirm('Eliminare questa misurazione?')) {
+                            removeMeasurement(measurement.id);
+                          }
+                        }}
+                        className="text-xs px-2 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+                        title="Elimina misurazione"
+                      >
+                        🗑️
+                      </button>
                     </div>
                   </div>
                 </div>

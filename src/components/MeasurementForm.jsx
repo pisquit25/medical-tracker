@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { useMedical } from '../context/MedicalContext';
 import { convertUnit, formatValueWithUnit } from '../utils/unitConversions';
@@ -6,12 +6,23 @@ import { convertUnit, formatValueWithUnit } from '../utils/unitConversions';
 const MeasurementForm = () => {
   const { parameters, addMeasurement } = useMedical();
   const [formData, setFormData] = useState({
-    parameter: parameters.length > 0 ? parameters[0].name : '',
+    parameter: '',
     value: '',
-    unit: parameters.length > 0 ? parameters[0].unit : '',
+    unit: '',
     date: new Date().toISOString().split('T')[0],
     notes: ''
   });
+
+  // Inizializza il form quando i parametri vengono caricati
+  useEffect(() => {
+    if (parameters.length > 0 && !formData.parameter) {
+      setFormData(prev => ({
+        ...prev,
+        parameter: parameters[0].name,
+        unit: parameters[0].unit
+      }));
+    }
+  }, [parameters, formData.parameter]);
 
   const currentParameter = parameters.find(p => p.name === formData.parameter);
   const availableUnits = currentParameter?.availableUnits || [currentParameter?.unit];
@@ -86,6 +97,24 @@ const MeasurementForm = () => {
   };
 
   const conversionPreview = getConversionPreview();
+
+  // Se non ci sono parametri, mostra un messaggio
+  if (parameters.length === 0) {
+    return (
+      <div className="card animate-slide-in">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          Nuova Misurazione
+        </h2>
+        <div className="text-center py-8">
+          <div className="text-6xl mb-4">⚙️</div>
+          <p className="text-gray-700 font-semibold mb-2">Nessun parametro configurato</p>
+          <p className="text-gray-500 text-sm">
+            Vai su <strong>Impostazioni</strong> per aggiungere il primo parametro
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="card animate-slide-in">
