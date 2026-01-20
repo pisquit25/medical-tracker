@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import MeasurementForm from '../components/MeasurementForm';
-import MeasurementList from '../components/MeasurementList';
+import StatusOverview from '../components/StatusOverview';
 import DataManager from '../components/DataManager';
 import Chart from '../components/Chart';
 
 const Dashboard = () => {
+  const [selectedParameter, setSelectedParameter] = useState('Glicemia');
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
       <div className="mb-6 sm:mb-8">
@@ -21,12 +23,18 @@ const Dashboard = () => {
         <div className="lg:col-span-1 space-y-4 sm:space-y-6">
           <MeasurementForm />
           <DataManager />
-          <MeasurementList />
+          <StatusOverview 
+            selectedParameter={selectedParameter}
+            onParameterChange={setSelectedParameter}
+          />
         </div>
 
         {/* Area principale */}
         <div className="lg:col-span-2">
-          <Chart />
+          <Chart 
+            selectedParameter={selectedParameter}
+            onParameterChange={setSelectedParameter}
+          />
         </div>
       </div>
 

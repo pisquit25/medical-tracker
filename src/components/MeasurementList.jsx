@@ -62,6 +62,11 @@ const MeasurementList = () => {
                       <span className="text-sm text-gray-500">
                         {param?.unit}
                       </span>
+                      {m.originalUnit && m.originalUnit !== param?.unit && (
+                        <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                          ({m.originalValue} {m.originalUnit})
+                        </span>
+                      )}
                     </div>
                     <div className="text-xs text-gray-500 font-medium">
                       {new Date(m.date).toLocaleDateString('it-IT', {
@@ -70,6 +75,11 @@ const MeasurementList = () => {
                         year: 'numeric'
                       })}
                     </div>
+                    {m.notes && (
+                      <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600 border-l-2 border-blue-400">
+                        <span className="font-semibold">📝</span> {m.notes}
+                      </div>
+                    )}
                   </div>
                   
                   <div className="flex gap-2 flex-shrink-0">

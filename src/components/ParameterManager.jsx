@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Edit2, Trash2, Save, X } from 'lucide-react';
 import { useMedical } from '../context/MedicalContext';
+import { unitCategories, detectCategory, getAvailableUnits, getDefaultUnit } from '../utils/unitConversions';
 
 const ParameterManager = () => {
   const { parameters, addParameter, updateParameter, deleteParameter } = useMedical();
@@ -8,6 +9,7 @@ const ParameterManager = () => {
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
+    unitCategory: 'generic',
     unit: '',
     minRange: '',
     maxRange: '',
@@ -17,6 +19,7 @@ const ParameterManager = () => {
   const resetForm = () => {
     setFormData({
       name: '',
+      unitCategory: 'generic',
       unit: '',
       minRange: '',
       maxRange: '',
@@ -26,12 +29,37 @@ const ParameterManager = () => {
     setEditingId(null);
   };
 
+  const handleNameChange = (name) => {
+    const detectedCategory = detectCategory(name);
+    const defaultUnit = getDefaultUnit(detectedCategory);
+    
+    setFormData({
+      ...formData,
+      name,
+      unitCategory: detectedCategory,
+      unit: defaultUnit
+    });
+  };
+
+  const handleCategoryChange = (category) => {
+    const defaultUnit = getDefaultUnit(category);
+    setFormData({
+      ...formData,
+      unitCategory: category,
+      unit: defaultUnit
+    });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    const availableUnits = getAvailableUnits(formData.unitCategory);
     
     const newParameter = {
       name: formData.name,
       unit: formData.unit,
+      unitCategory: formData.unitCategory,
+      availableUnits: availableUnits.map(u => u.value),
       standardRange: {
         min: parseFloat(formData.minRange),
         max: parseFloat(formData.maxRange)
@@ -52,6 +80,7 @@ const ParameterManager = () => {
   const startEdit = (param) => {
     setFormData({
       name: param.name,
+      unitCategory: param.unitCategory || 'generic',
       unit: param.unit,
       minRange: param.standardRange.min.toString(),
       maxRange: param.standardRange.max.toString(),
@@ -74,6 +103,8 @@ const ParameterManager = () => {
       deleteParameter(paramId);
     }
   };
+
+  const availableUnitsForCategory = getAvailableUnits(formData.unitCategory);
 
   return (
     <div className="card animate-slide-in" style={{ animationDelay: '0.1s' }}>
@@ -98,37 +129,64 @@ const ParameterManager = () => {
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+            <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Nome Parametro *
               </label>
               <input
                 type="text"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) => handleNameChange(e.target.value)}
                 className="input"
-                placeholder="Es: Emoglobina Glicata"
+                placeholder="Es: Glicemia, Emoglobina, TSH..."
                 required
               />
+              <p className="text-xs text-gray-500 mt-1">
+                💡 Il sistema rileverà automaticamente il tipo di parametro e suggerirà le unità appropriate
+              </p>
             </div>
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Unità di Misura *
+                Categoria Unità di Misura *
               </label>
-              <input
-                type="text"
+              <select
+                value={formData.unitCategory}
+                onChange={(e) => handleCategoryChange(e.target.value)}
+                className="input"
+              >
+                {Object.entries(unitCategories).map(([key, cat]) => (
+                  <option key={key} value={key}>
+                    {cat.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Unità di Misura Predefinita *
+              </label>
+              <select
                 value={formData.unit}
                 onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
                 className="input"
-                placeholder="Es: %"
                 required
-              />
+              >
+                {availableUnitsForCategory.map(unit => (
+                  <option key={unit.value} value={unit.value}>
+                    {unit.label} {unit.isDefault ? '(predefinita)' : ''}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                📊 Unità disponibili: {availableUnitsForCategory.map(u => u.label).join(', ')}
+              </p>
             </div>
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Range Minimo *
+                Range Minimo * (in {formData.unit})
               </label>
               <input
                 type="number"
@@ -136,14 +194,14 @@ const ParameterManager = () => {
                 value={formData.minRange}
                 onChange={(e) => setFormData({ ...formData, minRange: e.target.value })}
                 className="input"
-                placeholder="Es: 4.0"
+                placeholder="Es: 70"
                 required
               />
             </div>
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Range Massimo *
+                Range Massimo * (in {formData.unit})
               </label>
               <input
                 type="number"
@@ -151,7 +209,7 @@ const ParameterManager = () => {
                 value={formData.maxRange}
                 onChange={(e) => setFormData({ ...formData, maxRange: e.target.value })}
                 className="input"
-                placeholder="Es: 5.6"
+                placeholder="Es: 100"
                 required
               />
             </div>
@@ -223,18 +281,26 @@ const ParameterManager = () => {
                     </h4>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                     <div>
-                      <span className="text-gray-600">Unità:</span>
+                      <span className="text-gray-600">Unità predefinita:</span>
                       <span className="ml-2 font-semibold text-gray-900">{param.unit}</span>
                     </div>
+                    {param.availableUnits && param.availableUnits.length > 1 && (
+                      <div>
+                        <span className="text-gray-600">Unità disponibili:</span>
+                        <span className="ml-2 text-xs text-gray-700">
+                          {param.availableUnits.join(', ')}
+                        </span>
+                      </div>
+                    )}
                     <div>
                       <span className="text-gray-600">Range Standard:</span>
                       <span className="ml-2 font-semibold text-gray-900">
                         {param.standardRange.min} - {param.standardRange.max}
                       </span>
                     </div>
-                    <div className="col-span-2">
+                    <div>
                       <span className="text-gray-600">Formula:</span>
                       <span className="ml-2 font-semibold text-gray-900">{param.customFormula}</span>
                     </div>
