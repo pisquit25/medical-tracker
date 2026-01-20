@@ -10,7 +10,7 @@ function App() {
   return (
     <MedicalProvider>
       <Router>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
           <Header />
           <Routes>
             <Route path="/" element={<Dashboard />} />
