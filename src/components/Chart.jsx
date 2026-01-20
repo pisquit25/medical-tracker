@@ -13,7 +13,7 @@ const Chart = ({ selectedParameter, onParameterChange }) => {
     if (selectedParameter && selectedParameter !== currentParameter) {
       setCurrentParameter(selectedParameter);
     }
-  }, [selectedParameter]);
+  }, [selectedParameter, currentParameter]);
 
   const handleParameterChange = (paramName) => {
     setCurrentParameter(paramName);
