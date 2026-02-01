@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useMedical } from '../context/MedicalContext';
+import { usePatients } from '../context/PatientContext';
 
 const StatusOverview = ({ selectedParameter, onParameterChange }) => {
   const { measurements, parameters, calculateCustomRange, removeMeasurement, toggleIncludeInFormula } = useMedical();
+  const { getActivePatient } = usePatients();
+  const activePatient = getActivePatient();
+  
   const [currentParam, setCurrentParam] = useState(selectedParameter || (parameters.length > 0 ? parameters[0].name : ''));
+
+  // Filtra misurazioni per paziente attivo
+  const patientMeasurements = measurements.filter(
+    m => m.patientId === activePatient?.id
+  );
 
   // Sincronizza con il parametro selezionato dal grafico
   useEffect(() => {
@@ -17,7 +26,7 @@ const StatusOverview = ({ selectedParameter, onParameterChange }) => {
   const getMeasurementStatus = (measurement, parameter) => {
     const value = measurement.value;
     const standardRange = parameter.standardRange;
-    const customRange = calculateCustomRange(parameter.name);
+    const customRange = calculateCustomRange(parameter.name, activePatient?.id);
 
     let inStandardRange = false;
     let inCustomRange = false;
@@ -49,12 +58,12 @@ const StatusOverview = ({ selectedParameter, onParameterChange }) => {
     }
   };
 
-  // Ottieni le misurazioni del parametro selezionato
+  // Ottieni le misurazioni del parametro selezionato per il paziente attivo
   const getParameterMeasurements = () => {
     const parameter = parameters.find(p => p.name === currentParam);
     if (!parameter) return [];
 
-    const paramMeasurements = measurements
+    const paramPatientMeasurements = patientMeasurements
       .filter(m => m.parameter === currentParam)
       .sort((a, b) => new Date(b.date) - new Date(a.date))
       .slice(0, 10) // Mostra le ultime 10 misurazioni
@@ -64,12 +73,12 @@ const StatusOverview = ({ selectedParameter, onParameterChange }) => {
         status: getMeasurementStatus(m, parameter)
       }));
 
-    return paramMeasurements;
+    return paramPatientMeasurements;
   };
 
   const parameterMeasurements = getParameterMeasurements();
   const currentParameter = parameters.find(p => p.name === currentParam);
-  const customRange = calculateCustomRange(currentParam);
+  const customRange = calculateCustomRange(currentParam, activePatient?.id);
 
   // Conta per categoria
   const statusCounts = parameterMeasurements.reduce((acc, item) => {

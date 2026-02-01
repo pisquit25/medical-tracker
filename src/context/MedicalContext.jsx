@@ -138,6 +138,7 @@ export const MedicalProvider = ({ children }) => {
       ...measurement,
       id: Date.now(),
       value: parseFloat(measurement.value),
+      patientId: measurement.patientId || null,
       includedInFormula: true
     }]);
   };
@@ -152,9 +153,11 @@ export const MedicalProvider = ({ children }) => {
     ));
   };
 
-  const calculateCustomRange = (parameterName) => {
+  const calculateCustomRange = (parameterName, patientId = null) => {
     const paramMeasurements = measurements.filter(
-      m => m.parameter === parameterName && m.includedInFormula
+      m => m.parameter === parameterName && 
+           m.includedInFormula &&
+           (!patientId || m.patientId === patientId)
     );
 
     if (paramMeasurements.length < 2) return null;

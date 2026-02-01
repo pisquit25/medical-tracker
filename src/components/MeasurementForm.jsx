@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { useMedical } from '../context/MedicalContext';
+import { usePatients } from '../context/PatientContext';
 import { convertUnit, formatValueWithUnit } from '../utils/unitConversions';
 
 const MeasurementForm = () => {
   const { parameters, addMeasurement } = useMedical();
+  const { getActivePatient } = usePatients();
+  const activePatient = getActivePatient();
+  
   const [formData, setFormData] = useState({
     parameter: '',
     value: '',
@@ -57,7 +61,8 @@ const MeasurementForm = () => {
         originalValue: parseFloat(formData.value),
         originalUnit: formData.unit,
         date: formData.date,
-        notes: formData.notes.trim()
+        notes: formData.notes.trim(),
+        patientId: activePatient?.id
       });
       
       setFormData({
