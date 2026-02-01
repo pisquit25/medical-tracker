@@ -400,6 +400,7 @@ const PatientForm = ({ patient = null, onClose, onSuccess }) => {
         </form>
       </div>
     </div>
+    </div>
   );
 };
 
