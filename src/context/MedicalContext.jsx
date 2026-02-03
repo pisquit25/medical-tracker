@@ -149,65 +149,6 @@ export const MedicalProvider = ({ children }) => {
     ));
   };
 
-  // NUOVO: Aggiorna automaticamente gli outlier quando cambiano le misurazioni
-  useEffect(() => {
-    if (measurements.length === 0) return;
-
-    // Raggruppa per parametro e paziente
-    const groupedMeasurements = {};
-    measurements.forEach(m => {
-      const key = `${m.parameter}_${m.patientId || 'null'}`;
-      if (!groupedMeasurements[key]) {
-        groupedMeasurements[key] = [];
-      }
-      groupedMeasurements[key].push(m);
-    });
-
-    // Per ogni gruppo, calcola setpoint e identifica outlier
-    let hasChanges = false;
-    const updatedMeasurements = [...measurements];
-
-    Object.entries(groupedMeasurements).forEach(([key, groupMeasurements]) => {
-      if (groupMeasurements.length < 5) {
-        // Con poche misurazioni, tutte incluse
-        groupMeasurements.forEach(m => {
-          const idx = updatedMeasurements.findIndex(um => um.id === m.id);
-          if (idx !== -1 && !updatedMeasurements[idx].includedInFormula) {
-            updatedMeasurements[idx].includedInFormula = true;
-            hasChanges = true;
-          }
-        });
-        return;
-      }
-
-      const setpointResult = calculateSetpointHybrid(groupMeasurements);
-      
-      if (setpointResult && !setpointResult.error) {
-        // Se metodo robusto, usa gli outlier identificati
-        if (setpointResult.methodUsed === 'robust' && setpointResult.outliers) {
-          const outlierValues = setpointResult.outliers.values || [];
-          
-          groupMeasurements.forEach(m => {
-            const idx = updatedMeasurements.findIndex(um => um.id === m.id);
-            if (idx !== -1) {
-              const isOutlier = outlierValues.some(ov => Math.abs(ov - m.value) < 0.01);
-              const shouldBeIncluded = !isOutlier;
-              
-              if (updatedMeasurements[idx].includedInFormula !== shouldBeIncluded) {
-                updatedMeasurements[idx].includedInFormula = shouldBeIncluded;
-                hasChanges = true;
-              }
-            }
-          });
-        }
-      }
-    });
-
-    if (hasChanges) {
-      setMeasurements(updatedMeasurements);
-    }
-  }, [measurements.length]); // Solo quando cambia il numero di misurazioni
-
   const calculateCustomRange = (parameterName, patientId = null) => {
     const paramMeasurements = measurements.filter(
       m => m.parameter === parameterName && 
@@ -234,6 +175,29 @@ export const MedicalProvider = ({ children }) => {
       method: setpointResult.methodUsed,
       confidence: setpointResult.confidence
     };
+  };
+
+  // NUOVO: Helper per verificare se una misurazione è outlier
+  const isOutlier = (measurementId) => {
+    const measurement = measurements.find(m => m.id === measurementId);
+    if (!measurement) return false;
+
+    // Ottieni tutte le misurazioni dello stesso parametro e paziente
+    const paramMeasurements = measurements.filter(
+      m => m.parameter === measurement.parameter && 
+           m.patientId === measurement.patientId
+    );
+
+    if (paramMeasurements.length < 5) return false;
+
+    const setpointResult = calculateSetpointHybrid(paramMeasurements);
+    
+    if (!setpointResult || setpointResult.error) return false;
+    if (setpointResult.methodUsed !== 'robust') return false;
+    if (!setpointResult.outliers) return false;
+
+    const outlierValues = setpointResult.outliers.values || [];
+    return outlierValues.some(ov => Math.abs(ov - measurement.value) < 0.01);
   };
 
   // NUOVO: Calcola setpoint con metodo ibrido (Robust < 20, GMM >= 20)
@@ -304,6 +268,7 @@ export const MedicalProvider = ({ children }) => {
     toggleIncludeInFormula,
     calculateCustomRange,
     calculateSetpoint,
+    isOutlier,
     exportData,
     importData
   };

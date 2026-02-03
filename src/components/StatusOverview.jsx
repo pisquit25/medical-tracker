@@ -4,7 +4,7 @@ import { useMedical } from '../context/MedicalContext';
 import { usePatients } from '../context/PatientContext';
 
 const StatusOverview = ({ selectedParameter, onParameterChange }) => {
-  const { measurements, parameters, calculateCustomRange, removeMeasurement, toggleIncludeInFormula } = useMedical();
+  const { measurements, parameters, calculateCustomRange, removeMeasurement, isOutlier } = useMedical();
   const { getActivePatient } = usePatients();
   const activePatient = getActivePatient();
   
@@ -300,8 +300,8 @@ const StatusOverview = ({ selectedParameter, onParameterChange }) => {
 
                     {/* Pulsanti azioni */}
                     <div className="flex flex-col gap-1 mt-2">
-                      {/* Mostra se è outlier (solo info, non toggle) */}
-                      {!measurement.includedInFormula && (
+                      {/* Mostra se è outlier (automatico, no toggle) */}
+                      {isOutlier(measurement.id) && (
                         <div className="text-xs px-2 py-1 rounded bg-orange-100 text-orange-700 border border-orange-200">
                           ⚠️ Outlier
                         </div>
