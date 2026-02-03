@@ -296,10 +296,10 @@ const Chart = ({ selectedParameter, onParameterChange }) => {
               {customRange.min.toFixed(2)} - {customRange.max.toFixed(2)} {parameter?.unit}
             </p>
             <p className="text-xs text-amber-700 mt-1">
-              Media: {customRange.mean.toFixed(2)} | SD: {customRange.sd.toFixed(2)}
+              Setpoint: {customRange.mean.toFixed(2)} | SD: {customRange.sd.toFixed(2)}
             </p>
             <p className="text-xs text-amber-700">
-              Formula: {parameter?.customFormula}
+              Formula: Setpoint ± 1.5×SD
             </p>
             <p className="text-xs text-amber-700">
               Basato su {measurements.filter(m => m.parameter === currentParameter && m.includedInFormula && m.patientId === activePatient?.id).length} misurazioni

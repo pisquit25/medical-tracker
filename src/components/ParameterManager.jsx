@@ -288,8 +288,8 @@ const ParameterManager = () => {
                       </span>
                     </div>
                     <div>
-                      <span className="text-gray-600">Formula:</span>
-                      <span className="ml-2 font-semibold text-gray-900">{param.customFormula}</span>
+                      <span className="text-gray-600">Formula Range Personalizzato:</span>
+                      <span className="ml-2 font-semibold text-primary-600">Setpoint ± 1.5×SD (automatico)</span>
                     </div>
                   </div>
                 </div>
