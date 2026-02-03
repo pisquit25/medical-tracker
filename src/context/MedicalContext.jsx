@@ -19,7 +19,6 @@ const defaultParameters = [
     unitCategory: 'glucose',
     availableUnits: ['mg/dL', 'mmol/L'],
     standardRange: { min: 70, max: 100 },
-    customFormula: 'mean ± 1.5*sd',
     color: '#3b82f6'
   },
   { 
@@ -29,7 +28,6 @@ const defaultParameters = [
     unitCategory: 'generic',
     availableUnits: ['mm/h'],
     standardRange: { min: 0, max: 20 },
-    customFormula: 'mean ± 2*sd',
     color: '#8b5cf6'
   },
   { 
@@ -39,7 +37,6 @@ const defaultParameters = [
     unitCategory: 'thyroid',
     availableUnits: ['mIU/L', 'µIU/mL'],
     standardRange: { min: 0.4, max: 4.0 },
-    customFormula: 'mean ± 1.5*sd',
     color: '#ec4899'
   },
   { 
@@ -49,7 +46,6 @@ const defaultParameters = [
     unitCategory: 'cholesterol',
     availableUnits: ['mg/dL', 'mmol/L'],
     standardRange: { min: 0, max: 200 },
-    customFormula: 'mean ± 1.5*sd',
     color: '#f59e0b'
   },
   { 
@@ -59,7 +55,6 @@ const defaultParameters = [
     unitCategory: 'hemoglobin',
     availableUnits: ['g/dL', 'g/L', 'mmol/L'],
     standardRange: { min: 12, max: 16 },
-    customFormula: 'mean ± 1.5*sd',
     color: '#10b981'
   }
 ];
@@ -140,7 +135,7 @@ export const MedicalProvider = ({ children }) => {
       id: Date.now(),
       value: parseFloat(measurement.value),
       patientId: measurement.patientId || null,
-      includedInFormula: true
+      includedInFormula: true  // Inizialmente inclusa, poi verrà aggiornata
     }]);
   };
 
@@ -157,29 +152,52 @@ export const MedicalProvider = ({ children }) => {
   const calculateCustomRange = (parameterName, patientId = null) => {
     const paramMeasurements = measurements.filter(
       m => m.parameter === parameterName && 
-           m.includedInFormula &&
            (!patientId || m.patientId === patientId)
     );
 
-    if (paramMeasurements.length < 2) return null;
+    if (paramMeasurements.length < 5) return null;
 
-    const values = paramMeasurements.map(m => m.value);
-    const mean = values.reduce((a, b) => a + b, 0) / values.length;
-    const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
-    const sd = Math.sqrt(variance);
-
-    const parameter = parameters.find(p => p.name === parameterName);
+    // USA SETPOINT (Robust o GMM) invece di media semplice
+    const setpointResult = calculateSetpointHybrid(paramMeasurements);
     
-    let multiplier = 1.5;
-    if (parameter?.customFormula.includes('2*sd')) multiplier = 2;
-    if (parameter?.customFormula.includes('1*sd') && !parameter?.customFormula.includes('1.5*sd')) multiplier = 1;
+    if (!setpointResult || setpointResult.error) return null;
+
+    const { setpoint, std } = setpointResult;
+
+    // Multiplier FISSO a 1.5 (range personalizzato automatico)
+    const multiplier = 1.5;
 
     return {
-      min: mean - (multiplier * sd),
-      max: mean + (multiplier * sd),
-      mean,
-      sd
+      min: setpoint - (multiplier * std),
+      max: setpoint + (multiplier * std),
+      mean: setpoint,
+      sd: std,
+      method: setpointResult.methodUsed,
+      confidence: setpointResult.confidence
     };
+  };
+
+  // NUOVO: Helper per verificare se una misurazione è outlier
+  const isOutlier = (measurementId) => {
+    const measurement = measurements.find(m => m.id === measurementId);
+    if (!measurement) return false;
+
+    // Ottieni tutte le misurazioni dello stesso parametro e paziente
+    const paramMeasurements = measurements.filter(
+      m => m.parameter === measurement.parameter && 
+           m.patientId === measurement.patientId
+    );
+
+    if (paramMeasurements.length < 5) return false;
+
+    const setpointResult = calculateSetpointHybrid(paramMeasurements);
+    
+    if (!setpointResult || setpointResult.error) return false;
+    if (setpointResult.methodUsed !== 'robust') return false;
+    if (!setpointResult.outliers) return false;
+
+    const outlierValues = setpointResult.outliers.values || [];
+    return outlierValues.some(ov => Math.abs(ov - measurement.value) < 0.01);
   };
 
   // NUOVO: Calcola setpoint con metodo ibrido (Robust < 20, GMM >= 20)
@@ -250,6 +268,7 @@ export const MedicalProvider = ({ children }) => {
     toggleIncludeInFormula,
     calculateCustomRange,
     calculateSetpoint,
+    isOutlier,
     exportData,
     importData
   };

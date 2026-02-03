@@ -4,7 +4,7 @@ import { useMedical } from '../context/MedicalContext';
 import { usePatients } from '../context/PatientContext';
 
 const StatusOverview = ({ selectedParameter, onParameterChange }) => {
-  const { measurements, parameters, calculateCustomRange, removeMeasurement, toggleIncludeInFormula } = useMedical();
+  const { measurements, parameters, calculateCustomRange, removeMeasurement, isOutlier } = useMedical();
   const { getActivePatient } = usePatients();
   const activePatient = getActivePatient();
   
@@ -266,9 +266,10 @@ const StatusOverview = ({ selectedParameter, onParameterChange }) => {
 
                       {customRange && (
                         <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                          <div className="w-3 h-3 rounded-full bg-blue-500"></div>
                           <span className="text-gray-700">
-                            <span className="font-semibold">Range Personale:</span> {customRange.min.toFixed(2)} - {customRange.max.toFixed(2)}
+                            <span className="font-semibold">Range Personalizzato:</span> {customRange.min.toFixed(2)} - {customRange.max.toFixed(2)}
+                            <span className="text-xs text-gray-500 ml-1">(Setpoint ± 1.5×SD)</span>
                           </span>
                           {measurement.value >= customRange.min && 
                            measurement.value <= customRange.max ? (
@@ -299,17 +300,13 @@ const StatusOverview = ({ selectedParameter, onParameterChange }) => {
 
                     {/* Pulsanti azioni */}
                     <div className="flex flex-col gap-1 mt-2">
-                      <button
-                        onClick={() => toggleIncludeInFormula(measurement.id)}
-                        className={`text-xs px-2 py-1 rounded transition-colors ${
-                          measurement.includedInFormula
-                            ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                        }`}
-                        title={measurement.includedInFormula ? 'Escludi da formula' : 'Includi in formula'}
-                      >
-                        {measurement.includedInFormula ? '📊' : '⊘'}
-                      </button>
+                      {/* Mostra se è outlier (automatico, no toggle) */}
+                      {isOutlier(measurement.id) && (
+                        <div className="text-xs px-2 py-1 rounded bg-orange-100 text-orange-700 border border-orange-200">
+                          ⚠️ Outlier
+                        </div>
+                      )}
+                      
                       <button
                         onClick={() => {
                           if (window.confirm('Eliminare questa misurazione?')) {
