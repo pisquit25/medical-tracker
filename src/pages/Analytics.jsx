@@ -114,7 +114,7 @@ const Analytics = () => {
                       <div className="flex items-center gap-2 mb-2">
                         <Target size={16} className="text-primary-600" />
                         <span className="text-xs font-semibold text-primary-700">Setpoint Biologico</span>
-                        <InfoTooltip title="Setpoint Biologico">
+                        <InfoTooltip title="Setpoint Biologico" position="bottom">
                           Il <strong>setpoint</strong> è il valore "normale" individuale del parametro per questo paziente, 
                           calcolato automaticamente dal sistema usando:
                           <ul className="mt-2 space-y-1 list-disc list-inside">
