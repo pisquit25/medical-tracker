@@ -270,7 +270,20 @@ const Analytics = () => {
 
                   {param.standardRange && (
                     <div className="pt-3 border-t border-gray-200">
-                      <div className="text-xs text-gray-600 mb-2">Range Standard</div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="text-xs text-gray-600">Range Standard</div>
+                        <InfoTooltip title="Barra Range Standard" position="bottom">
+                          La <strong>barra verde</strong> mostra graficamente il range standard del parametro rispetto a tutte le tue misurazioni:
+                          <ul className="mt-2 space-y-1 list-disc list-inside text-xs">
+                            <li>Barra verde = zona normale (range medico standard)</li>
+                            <li>Sfondo grigio = tutte le tue misurazioni (min-max)</li>
+                            <li>Più lunga la barra verde = più ampio il range normale</li>
+                          </ul>
+                          <div className="mt-2 text-xs text-gray-300">
+                            Ti permette di vedere a colpo d'occhio quanto del tuo range di misurazioni rientra nella norma.
+                          </div>
+                        </InfoTooltip>
+                      </div>
                       <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
                         <div
                           className="absolute h-full bg-emerald-500 rounded-full"
@@ -296,14 +309,19 @@ const Analytics = () => {
                       <div className="pt-3 border-t border-gray-200">
                         <div className="flex items-center gap-2 mb-2">
                           <div className="text-xs font-semibold text-gray-700">Range Personalizzato</div>
-                          <InfoTooltip title="Range Personalizzato" position="bottom">
-                            Il <strong>Range Personalizzato</strong> è calcolato dal setpoint individuale del paziente:
+                          <InfoTooltip title="Barra Range Personalizzato" position="bottom">
+                            La <strong>barra blu</strong> mostra graficamente il tuo range personalizzato calcolato dal setpoint:
                             <div className="mt-2 text-xs">
-                              <strong>Formula:</strong> Setpoint ± {param.customFormula || '1.5×SD'}
+                              <strong>Formula:</strong> Setpoint ± 1.5×SD
                             </div>
                             <div className="mt-2 text-xs">
                               <strong>Metodo:</strong> {customRange.method === 'gmm' ? 'Gaussian Mixture Model' : 'Media Robusta (IQR)'}
                             </div>
+                            <ul className="mt-2 space-y-1 list-disc list-inside text-xs">
+                              <li>Barra blu = tuo range normale individuale</li>
+                              <li>Più stretta del range standard = sei più stabile della media</li>
+                              <li>Più larga = hai più variabilità individuale</li>
+                            </ul>
                             <div className="mt-2 text-xs text-gray-300">
                               Questo range riflette la variabilità individuale del paziente ed è più accurato del range standard per valutare il controllo personale del parametro.
                             </div>
