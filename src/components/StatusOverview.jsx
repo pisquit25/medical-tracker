@@ -306,9 +306,9 @@ const StatusOverview = ({ selectedParameter, onParameterChange }) => {
                             ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                             : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                         }`}
-                        title={measurement.includedInFormula ? 'Escludi da formula' : 'Includi in formula'}
+                        title={measurement.includedInFormula ? 'Inclusa in formula (click per escludere)' : 'Esclusa da formula (click per includere)'}
                       >
-                        {measurement.includedInFormula ? '📊' : '⊘'}
+                        {measurement.includedInFormula ? '✓ Inclusa' : '✗ Esclusa'}
                       </button>
                       <button
                         onClick={() => {

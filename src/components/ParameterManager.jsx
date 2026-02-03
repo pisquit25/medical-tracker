@@ -12,8 +12,7 @@ const ParameterManager = () => {
     unitCategory: 'generic',
     unit: '',
     minRange: '',
-    maxRange: '',
-    formula: '1.5'
+    maxRange: ''
   });
 
   const resetForm = () => {
@@ -22,8 +21,7 @@ const ParameterManager = () => {
       unitCategory: 'generic',
       unit: '',
       minRange: '',
-      maxRange: '',
-      formula: '1.5'
+      maxRange: ''
     });
     setIsAdding(false);
     setEditingId(null);
@@ -64,7 +62,6 @@ const ParameterManager = () => {
         min: parseFloat(formData.minRange),
         max: parseFloat(formData.maxRange)
       },
-      customFormula: `mean ± ${formData.formula}*sd`,
       color: getRandomColor()
     };
 
@@ -83,8 +80,7 @@ const ParameterManager = () => {
       unitCategory: param.unitCategory || 'generic',
       unit: param.unit,
       minRange: param.standardRange.min.toString(),
-      maxRange: param.standardRange.max.toString(),
-      formula: param.customFormula.match(/[\d.]+/)?.[0] || '1.5'
+      maxRange: param.standardRange.max.toString()
     });
     setEditingId(param.id);
     setIsAdding(true);
@@ -214,19 +210,10 @@ const ParameterManager = () => {
               />
             </div>
 
-            <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Formula Personalizzata (moltiplicatore deviazione standard) *
-              </label>
-              <select
-                value={formData.formula}
-                onChange={(e) => setFormData({ ...formData, formula: e.target.value })}
-                className="input"
-              >
-                <option value="1">mean ± 1*sd (68% dei dati)</option>
-                <option value="1.5">mean ± 1.5*sd (87% dei dati)</option>
-                <option value="2">mean ± 2*sd (95% dei dati)</option>
-              </select>
+            <div className="md:col-span-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                ℹ️ <strong>Range Personalizzato Automatico:</strong> Verrà calcolato automaticamente dal setpoint individuale del paziente usando il metodo ibrido (Media Robusta &lt; 20 misurazioni, GMM ≥ 20 misurazioni) con formula fissa: <strong>Setpoint ± 1.5×SD</strong>
+              </p>
             </div>
           </div>
 
