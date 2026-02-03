@@ -228,32 +228,14 @@ export function calculateGMMSetpoint(values) {
 
   const { nComponents, means, variances, proportions } = bestModel;
 
-  let setpoint, cv, confidence, dominantCluster, realStd;
+  let setpoint, cv, confidence, dominantCluster;
 
   if (nComponents === 1) {
     setpoint = means[0];
-    realStd = Math.sqrt(variances[0]);
-    cv = realStd / setpoint;
+    cv = Math.sqrt(variances[0]) / setpoint;
     confidence = 'high';
     dominantCluster = null;
   } else {
-    // Assegna ogni valore al cluster più probabile
-    const clusterAssignments = values.map(val => {
-      const probabilities = means.map((mu, i) => 
-        proportions[i] * gaussianPDF(val, mu, variances[i])
-      );
-      const sum = probabilities.reduce((a, b) => a + b, 0);
-      if (sum === 0) return 0;
-      const normalizedProbs = probabilities.map(p => p / sum);
-      return normalizedProbs.indexOf(Math.max(...normalizedProbs));
-    });
-
-    // Raggruppa valori per cluster
-    const clusterValues = Array(nComponents).fill(null).map(() => []);
-    values.forEach((val, idx) => {
-      clusterValues[clusterAssignments[idx]].push(val);
-    });
-
     const maxProportion = Math.max(...proportions);
     const maxIdx = proportions.indexOf(maxProportion);
 
@@ -262,25 +244,12 @@ export function calculateGMMSetpoint(values) {
 
     if (isDominant) {
       setpoint = means[maxIdx];
-      
-      // USA SD REALE del cluster dominante, non del modello fitted!
-      const dominantValues = clusterValues[maxIdx];
-      if (dominantValues.length > 1) {
-        const clusterMean = mean(dominantValues);
-        const clusterVariance = variance(dominantValues);
-        realStd = Math.sqrt(clusterVariance);
-      } else {
-        // Fallback se cluster vuoto (non dovrebbe succedere)
-        realStd = Math.sqrt(variances[maxIdx]);
-      }
-      
-      cv = realStd / setpoint;
+      cv = Math.sqrt(variances[maxIdx]) / setpoint;
       confidence = maxProportion > 0.8 ? 'high' : 'medium';
       dominantCluster = maxIdx + 1;
     } else {
       setpoint = mean(values);
-      realStd = Math.sqrt(variance(values));
-      cv = realStd / setpoint;
+      cv = Math.sqrt(variance(values)) / setpoint;
       confidence = 'medium';
       dominantCluster = null;
     }
@@ -289,7 +258,7 @@ export function calculateGMMSetpoint(values) {
   return {
     setpoint: Number(setpoint.toFixed(2)),
     cv: Number((cv * 100).toFixed(2)),
-    std: Number(realStd.toFixed(2)),  // SD REALE dei dati, non del fit!
+    std: Number((Math.sqrt(cv * cv * setpoint * setpoint / 10000)).toFixed(2)),
     confidence,
     method: 'gmm',
     nComponents,
