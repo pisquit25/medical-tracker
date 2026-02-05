@@ -4,7 +4,7 @@ import { useMedical } from '../context/MedicalContext';
 import { usePatients } from '../context/PatientContext';
 
 const ParameterCalendarView = ({ parameter, onClose }) => {
-  const { measurements, calculateCustomRange } = useMedical();
+  const { measurements, calculateCustomRange, toggleIncludeInFormula, isOutlier } = useMedical();
   const { getActivePatient } = usePatients();
   const activePatient = getActivePatient();
 
@@ -205,10 +205,11 @@ const ParameterCalendarView = ({ parameter, onClose }) => {
                     onClick={() => measurement && setSelectedMeasurement(measurement)}
                     className={`
                       aspect-square rounded-lg border-2 p-1 sm:p-2 flex flex-col items-center justify-center
-                      transition-all cursor-pointer
+                      transition-all cursor-pointer relative
                       ${!day ? 'bg-gray-50 border-gray-100' : ''}
                       ${day && !measurement ? 'bg-gray-100 border-gray-300 hover:bg-gray-200' : ''}
                       ${measurement ? `${status.color} ${status.border} hover:scale-105 shadow-sm` : ''}
+                      ${measurement && !measurement.includedInFormula ? 'opacity-50 border-dashed' : ''}
                     `}
                   >
                     {day && (
@@ -226,6 +227,9 @@ const ParameterCalendarView = ({ parameter, onClose }) => {
                                 📝
                               </span>
                             )}
+                            {!measurement.includedInFormula && (
+                              <div className="absolute top-0.5 right-0.5 w-2 h-2 bg-white rounded-full" title="Esclusa dal calcolo"></div>
+                            )}
                           </>
                         )}
                       </>
@@ -239,6 +243,31 @@ const ParameterCalendarView = ({ parameter, onClose }) => {
           {/* Range Info */}
           {(parameter.standardRange || customRange) && (
             <div className="p-4 border-t border-gray-200 bg-gray-50">
+              {/* Legenda Colori */}
+              <div className="mb-4 p-3 bg-white rounded-lg border border-gray-200">
+                <div className="text-xs font-semibold text-gray-700 mb-2">Legenda</div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-4 h-4 rounded bg-green-500 border-2 border-green-600"></div>
+                    <span className="text-gray-600">Ottimale</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-4 h-4 rounded bg-yellow-500 border-2 border-yellow-600"></div>
+                    <span className="text-gray-600">Attenzione</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-4 h-4 rounded bg-red-500 border-2 border-red-600"></div>
+                    <span className="text-gray-600">Critico</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-4 h-4 rounded bg-blue-500 border-2 border-dashed border-blue-600 opacity-50 relative">
+                      <div className="absolute top-0 right-0 w-1.5 h-1.5 bg-white rounded-full"></div>
+                    </div>
+                    <span className="text-gray-600">Esclusa</span>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                 {parameter.standardRange && (
                   <div className="bg-white p-3 rounded-lg border border-gray-200">
@@ -360,6 +389,45 @@ const ParameterCalendarView = ({ parameter, onClose }) => {
                       </span>
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* Include/Exclude from Formula */}
+              <div>
+                <div className="text-sm font-semibold text-gray-600 mb-2">Calcolo Range Personalizzato</div>
+                <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedMeasurement.includedInFormula}
+                      onChange={() => {
+                        toggleIncludeInFormula(selectedMeasurement.id);
+                        // Aggiorna lo stato locale per mostrare il cambio immediatamente
+                        setSelectedMeasurement({
+                          ...selectedMeasurement,
+                          includedInFormula: !selectedMeasurement.includedInFormula
+                        });
+                      }}
+                      className="mt-0.5 w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <div className="flex-1">
+                      <div className="font-semibold text-blue-900">
+                        {selectedMeasurement.includedInFormula 
+                          ? '✓ Inclusa nel calcolo' 
+                          : '✗ Esclusa dal calcolo'}
+                      </div>
+                      <div className="text-xs text-blue-700 mt-1">
+                        {selectedMeasurement.includedInFormula
+                          ? 'Questa misurazione viene usata per calcolare il setpoint e il range personalizzato. Deseleziona per escluderla (es: valore anomalo, errore di misurazione).'
+                          : 'Questa misurazione è esclusa dal calcolo. Il range personalizzato sarà calcolato senza questo valore. Seleziona per includerla nuovamente.'}
+                      </div>
+                      {isOutlier(selectedMeasurement.id) && selectedMeasurement.includedInFormula && (
+                        <div className="mt-2 text-xs text-orange-700 bg-orange-100 px-2 py-1 rounded border border-orange-300">
+                          ⚠️ <strong>Nota:</strong> Questo valore è stato identificato come outlier statistico dal sistema. Considera di escluderlo se sembra essere un errore di misurazione.
+                        </div>
+                      )}
+                    </div>
+                  </label>
                 </div>
               </div>
             </div>
