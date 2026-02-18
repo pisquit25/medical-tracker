@@ -1,48 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from 'recharts';
 import { useMedical } from '../context/MedicalContext';
-import { usePatients } from '../context/PatientContext';
 
-const Chart = ({ selectedParameter, onParameterChange }) => {
+const Chart = () => {
   const { parameters, measurements, calculateCustomRange } = useMedical();
-  const { getActivePatient } = usePatients();
-  const activePatient = getActivePatient();
-  
-  const [currentParameter, setCurrentParameter] = useState(selectedParameter || (parameters.length > 0 ? parameters[0].name : 'Glicemia'));
+  const [selectedParameter, setSelectedParameter] = useState('Glicemia');
   const [showStandardRange, setShowStandardRange] = useState(true);
   const [showCustomRange, setShowCustomRange] = useState(true);
 
-  // Sincronizza con il parametro selezionato da StatusOverview
-  useEffect(() => {
-    if (selectedParameter && selectedParameter !== currentParameter) {
-      setCurrentParameter(selectedParameter);
-    }
-  }, [selectedParameter, currentParameter]);
+  const currentParameter = parameters.find(p => p.name === selectedParameter);
+  const customRange = calculateCustomRange(selectedParameter);
 
-  const handleParameterChange = (paramName) => {
-    setCurrentParameter(paramName);
-    if (onParameterChange) {
-      onParameterChange(paramName);
-    }
-  };
-
-  const parameter = parameters.find(p => p.name === currentParameter);
-  const customRange = calculateCustomRange(currentParameter, activePatient?.id);
-
-  // Filtra misurazioni per paziente attivo
   const chartData = measurements
-    .filter(m => 
-      m.parameter === currentParameter &&
-      m.patientId === activePatient?.id
-    )
+    .filter(m => m.parameter === selectedParameter)
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     .map(m => ({
       date: new Date(m.date).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }),
       fullDate: m.date,
       value: m.value,
       id: m.id,
-      includedInFormula: m.includedInFormula,
-      notes: m.notes || ''
+      includedInFormula: m.includedInFormula
     }));
 
   const getYAxisDomain = () => {
@@ -52,9 +29,9 @@ const Chart = ({ selectedParameter, onParameterChange }) => {
     let minValue = Math.min(...values);
     let maxValue = Math.max(...values);
     
-    if (showStandardRange && parameter?.standardRange) {
-      minValue = Math.min(minValue, parameter.standardRange.min);
-      maxValue = Math.max(maxValue, parameter.standardRange.max);
+    if (showStandardRange && currentParameter?.standardRange) {
+      minValue = Math.min(minValue, currentParameter.standardRange.min);
+      maxValue = Math.max(maxValue, currentParameter.standardRange.max);
     }
 
     if (showCustomRange && customRange) {
@@ -70,76 +47,12 @@ const Chart = ({ selectedParameter, onParameterChange }) => {
     if (!active || !payload || !payload.length) return null;
 
     const data = payload[0].payload;
-    const value = data.value;
-    
-    // Determina colore in base ai range (logica semaforo)
-    const standardRange = parameter?.standardRange;
-    let inStandardRange = false;
-    let inCustomRange = false;
-    
-    if (standardRange) {
-      inStandardRange = value >= standardRange.min && value <= standardRange.max;
-    }
-    
-    if (customRange) {
-      inCustomRange = value >= customRange.min && value <= customRange.max;
-    }
-    
-    // Logica semaforo:
-    // Verde: dentro entrambi i range
-    // Arancione: dentro un solo range
-    // Rosso: fuori da entrambi
-    let valueColor = '#ef4444'; // Rosso default
-    let statusLabel = 'Fuori Range';
-    
-    if (inStandardRange && inCustomRange) {
-      valueColor = '#22c55e'; // Verde
-      statusLabel = 'Ottimale';
-    } else if (inStandardRange || inCustomRange) {
-      valueColor = '#f59e0b'; // Arancione
-      statusLabel = 'Attenzione';
-    }
-    
     return (
-      <div className="bg-white p-4 rounded-lg shadow-xl border-2" style={{ borderColor: valueColor }}>
+      <div className="bg-white p-4 rounded-lg shadow-xl border-2 border-gray-200">
         <p className="font-bold text-gray-900 mb-1">{data.fullDate}</p>
-        <p className="text-2xl font-bold" style={{ color: valueColor }}>
-          {data.value} {parameter?.unit}
+        <p className="text-2xl font-bold" style={{ color: currentParameter?.color }}>
+          {data.value} {currentParameter?.unit}
         </p>
-        <p className="text-xs font-semibold mt-1" style={{ color: valueColor }}>
-          {statusLabel}
-        </p>
-        {data.notes && (
-          <div className="mt-2 pt-2 border-t border-gray-200">
-            <p className="text-xs text-gray-600">
-              <span className="font-semibold">📝 Note:</span><br/>
-              {data.notes}
-            </p>
-          </div>
-        )}
-        {/* Indicator ranges */}
-        <div className="mt-2 pt-2 border-t border-gray-200 text-xs space-y-1">
-          {standardRange && (
-            <div className="flex items-center gap-1">
-              <span className={inStandardRange ? 'text-green-600' : 'text-red-600'}>
-                {inStandardRange ? '✓' : '✗'}
-              </span>
-              <span className="text-gray-600">
-                Range Std: {standardRange.min}-{standardRange.max}
-              </span>
-            </div>
-          )}
-          {customRange && (
-            <div className="flex items-center gap-1">
-              <span className={inCustomRange ? 'text-green-600' : 'text-red-600'}>
-                {inCustomRange ? '✓' : '✗'}
-              </span>
-              <span className="text-gray-600">
-                Range Pers: {customRange.min.toFixed(1)}-{customRange.max.toFixed(1)}
-              </span>
-            </div>
-          )}
-        </div>
       </div>
     );
   };
@@ -176,8 +89,8 @@ const Chart = ({ selectedParameter, onParameterChange }) => {
 
       <div className="mb-6">
         <select
-          value={currentParameter}
-          onChange={(e) => handleParameterChange(e.target.value)}
+          value={selectedParameter}
+          onChange={(e) => setSelectedParameter(e.target.value)}
           className="input max-w-xs"
         >
           {parameters.map(p => (
@@ -206,7 +119,7 @@ const Chart = ({ selectedParameter, onParameterChange }) => {
                 stroke="#6b7280"
                 style={{ fontSize: '12px' }}
                 label={{ 
-                  value: parameter?.unit, 
+                  value: currentParameter?.unit, 
                   angle: -90, 
                   position: 'insideLeft',
                   style: { fontSize: '14px', fill: '#6b7280', fontWeight: '600' }
@@ -215,10 +128,10 @@ const Chart = ({ selectedParameter, onParameterChange }) => {
               <Tooltip content={<CustomTooltip />} />
               <Legend />
 
-              {showStandardRange && parameter?.standardRange && (
+              {showStandardRange && currentParameter?.standardRange && (
                 <ReferenceArea
-                  y1={parameter.standardRange.min}
-                  y2={parameter.standardRange.max}
+                  y1={currentParameter.standardRange.min}
+                  y2={currentParameter.standardRange.max}
                   fill="#10b981"
                   fillOpacity={0.15}
                   label={{
@@ -246,16 +159,16 @@ const Chart = ({ selectedParameter, onParameterChange }) => {
               <Line
                 type="monotone"
                 dataKey="value"
-                stroke={parameter?.color || '#3b82f6'}
+                stroke={currentParameter?.color || '#3b82f6'}
                 strokeWidth={3}
                 dot={{ 
-                  fill: parameter?.color || '#3b82f6', 
+                  fill: currentParameter?.color || '#3b82f6', 
                   r: 5,
                   strokeWidth: 2,
                   stroke: '#fff'
                 }}
                 activeDot={{ r: 8 }}
-                name={parameter?.name}
+                name={currentParameter?.name}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -271,14 +184,14 @@ const Chart = ({ selectedParameter, onParameterChange }) => {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {showStandardRange && parameter?.standardRange && (
+        {showStandardRange && currentParameter?.standardRange && (
           <div className="p-4 bg-emerald-50 rounded-lg border-2 border-emerald-200">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-3 h-3 rounded-full bg-emerald-500" />
               <h4 className="font-bold text-emerald-900">Range Standard</h4>
             </div>
             <p className="text-sm text-emerald-800 font-semibold">
-              {parameter.standardRange.min} - {parameter.standardRange.max} {parameter.unit}
+              {currentParameter.standardRange.min} - {currentParameter.standardRange.max} {currentParameter.unit}
             </p>
             <p className="text-xs text-emerald-700 mt-1">
               Valori di riferimento popolazione generale
@@ -293,16 +206,16 @@ const Chart = ({ selectedParameter, onParameterChange }) => {
               <h4 className="font-bold text-amber-900">Range Personalizzato</h4>
             </div>
             <p className="text-sm text-amber-800 font-semibold">
-              {customRange.min.toFixed(2)} - {customRange.max.toFixed(2)} {parameter?.unit}
+              {customRange.min.toFixed(2)} - {customRange.max.toFixed(2)} {currentParameter?.unit}
             </p>
             <p className="text-xs text-amber-700 mt-1">
-              Setpoint: {customRange.mean.toFixed(2)} | SD: {customRange.sd.toFixed(2)}
+              Media: {customRange.mean.toFixed(2)} | SD: {customRange.sd.toFixed(2)}
             </p>
             <p className="text-xs text-amber-700">
-              Formula: Setpoint ± 1.5×SD
+              Formula: {currentParameter?.customFormula}
             </p>
             <p className="text-xs text-amber-700">
-              Basato su {measurements.filter(m => m.parameter === currentParameter && m.includedInFormula && m.patientId === activePatient?.id).length} misurazioni
+              Basato su {measurements.filter(m => m.parameter === selectedParameter && m.includedInFormula).length} misurazioni
             </p>
           </div>
         )}

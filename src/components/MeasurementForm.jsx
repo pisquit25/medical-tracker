@@ -1,32 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useMedical } from '../context/MedicalContext';
-import { usePatients } from '../context/PatientContext';
 import { convertUnit, formatValueWithUnit } from '../utils/unitConversions';
 
 const MeasurementForm = () => {
   const { parameters, addMeasurement } = useMedical();
-  const { getActivePatient } = usePatients();
-  const activePatient = getActivePatient();
-  
   const [formData, setFormData] = useState({
-    parameter: '',
+    parameter: parameters.length > 0 ? parameters[0].name : '',
     value: '',
-    unit: '',
-    date: new Date().toISOString().split('T')[0],
-    notes: ''
+    unit: parameters.length > 0 ? parameters[0].unit : '',
+    date: new Date().toISOString().split('T')[0]
   });
-
-  // Inizializza il form quando i parametri vengono caricati
-  useEffect(() => {
-    if (parameters.length > 0 && !formData.parameter) {
-      setFormData(prev => ({
-        ...prev,
-        parameter: parameters[0].name,
-        unit: parameters[0].unit
-      }));
-    }
-  }, [parameters, formData.parameter]);
 
   const currentParameter = parameters.find(p => p.name === formData.parameter);
   const availableUnits = currentParameter?.availableUnits || [currentParameter?.unit];
@@ -60,22 +44,19 @@ const MeasurementForm = () => {
         value: valueToStore,
         originalValue: parseFloat(formData.value),
         originalUnit: formData.unit,
-        date: formData.date,
-        notes: formData.notes.trim(),
-        patientId: activePatient?.id
+        date: formData.date
       });
       
       setFormData({
         ...formData,
         value: '',
-        date: new Date().toISOString().split('T')[0],
-        notes: ''
+        date: new Date().toISOString().split('T')[0]
       });
     }
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+    if (e.key === 'Enter') {
       handleSubmit(e);
     }
   };
@@ -102,24 +83,6 @@ const MeasurementForm = () => {
   };
 
   const conversionPreview = getConversionPreview();
-
-  // Se non ci sono parametri, mostra un messaggio
-  if (parameters.length === 0) {
-    return (
-      <div className="card animate-slide-in">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">
-          Nuova Misurazione
-        </h2>
-        <div className="text-center py-8">
-          <div className="text-6xl mb-4">⚙️</div>
-          <p className="text-gray-700 font-semibold mb-2">Nessun parametro configurato</p>
-          <p className="text-gray-500 text-sm">
-            Vai su <strong>Impostazioni</strong> per aggiungere il primo parametro
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="card animate-slide-in">
@@ -199,23 +162,6 @@ const MeasurementForm = () => {
             className="input"
             required
           />
-        </div>
-
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Note <span className="text-gray-500 font-normal text-xs">(opzionale)</span>
-          </label>
-          <textarea
-            value={formData.notes}
-            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            className="input resize-none"
-            rows="3"
-            placeholder="Es: Rilevazione a digiuno, dopo attività fisica, ecc..."
-            maxLength="500"
-          />
-          <div className="text-xs text-gray-500 mt-1 text-right">
-            {formData.notes.length}/500 caratteri
-          </div>
         </div>
 
         <button
