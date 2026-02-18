@@ -1,8 +1,7 @@
 import React from 'react';
-import { Activity, BarChart3, Settings, Users, User } from 'lucide-react';
+import { Activity, BarChart3, Calculator, Settings, Users, User } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { usePatients } from '../context/PatientContext';
-import { Activity, BarChart3, Calculator, Settings, Users, User } from 'lucide-react';
 
 const Header = () => {
   const location = useLocation();
