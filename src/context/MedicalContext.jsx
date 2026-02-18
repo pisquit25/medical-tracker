@@ -86,7 +86,19 @@ export const MedicalProvider = ({ children }) => {
     const savedParams = localStorage.getItem('medicalParameters');
     if (savedParams) {
       try {
-        setParameters(JSON.parse(savedParams));
+        const parsed = JSON.parse(savedParams);
+        // Auto-merge: aggiungi parametri mancanti da defaultParameters
+        const savedIds = parsed.map(p => p.id);
+        const missingParams = defaultParameters.filter(p => !savedIds.includes(p.id));
+        
+        if (missingParams.length > 0) {
+          console.log('✅ Aggiunti parametri mancanti:', missingParams.map(p => p.name));
+          const merged = [...parsed, ...missingParams];
+          setParameters(merged);
+          localStorage.setItem('medicalParameters', JSON.stringify(merged));
+        } else {
+          setParameters(parsed);
+        }
       } catch (error) {
         console.error('Error loading parameters:', error);
         setParameters(defaultParameters);
@@ -148,13 +160,22 @@ export const MedicalProvider = ({ children }) => {
 
   // Measurement operations
   const addMeasurement = (measurement) => {
-    setMeasurements(prev => [...prev, {
-      ...measurement,
-      id: Date.now(),
-      value: parseFloat(measurement.value),
-      patientId: measurement.patientId || null,
-      includedInFormula: true  // Inizialmente inclusa, poi verrà aggiornata
-    }]);
+    setMeasurements(prev => {
+      const newMeasurements = [...prev, {
+        ...measurement,
+        id: Date.now(),
+        value: parseFloat(measurement.value),
+        patientId: measurement.patientId || null,
+        includedInFormula: true
+      }];
+      
+      // Trigger ricalcolo ratios
+      window.dispatchEvent(new CustomEvent('measurementsUpdated', { 
+        detail: { measurements: newMeasurements } 
+      }));
+      
+      return newMeasurements;
+    });
   };
 
   const removeMeasurement = (id) => {
@@ -162,9 +183,18 @@ export const MedicalProvider = ({ children }) => {
   };
 
   const toggleIncludeInFormula = (id) => {
-    setMeasurements(prev => prev.map(m => 
-      m.id === id ? { ...m, includedInFormula: !m.includedInFormula } : m
-    ));
+    setMeasurements(prev => {
+      const updated = prev.map(m => 
+        m.id === id ? { ...m, includedInFormula: !m.includedInFormula } : m
+      );
+      
+      // Trigger ricalcolo ratios
+      window.dispatchEvent(new CustomEvent('measurementsUpdated', { 
+        detail: { measurements: updated } 
+      }));
+      
+      return updated;
+    });
   };
 
   const calculateCustomRange = (parameterName, patientId = null) => {

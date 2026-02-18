@@ -37,10 +37,9 @@ const predefinedRatios = [
     ],
     parameters: ['Glicemia', 'Azotemia', 'Sodiemia'],
     unit: 'mOsm/kg',
-    standardRange: { min: 291, max: 299 }, // 295 ± 4
+    standardRange: { min: 291, max: 299 },
     color: '#8b5cf6',
-    description: 'Misura la concentrazione totale di soluti nel plasma',
-    predefined: true
+    description: 'Misura la concentrazione totale di soluti nel plasma'
   }
 ];
 
@@ -88,6 +87,84 @@ export const RatioProvider = ({ children }) => {
     localStorage.setItem('ratioCalculations', JSON.stringify(ratioCalculations));
   }, [ratioCalculations]);
 
+  // Ascolta eventi di aggiornamento measurements
+  useEffect(() => {
+    const handleMeasurementsUpdate = (event) => {
+      const { measurements } = event.detail;
+      const activePatientId = localStorage.getItem('activePatientId');
+      
+      if (activePatientId && measurements && measurements.length > 0) {
+        console.log('🔄 Ricalcolo ratios triggered da evento measurements');
+        // Ricalcola direttamente qui invece di chiamare recalculateRatios
+        const newCalculations = [];
+
+        ratios.forEach(ratio => {
+          const measurementsByDate = {};
+          
+          measurements
+            .filter(m => m.patientId === activePatientId && m.includedInFormula)
+            .forEach(m => {
+              const date = m.date;
+              if (!measurementsByDate[date]) {
+                measurementsByDate[date] = {};
+              }
+              measurementsByDate[date][m.parameter] = m.value;
+            });
+
+          Object.keys(measurementsByDate).forEach(date => {
+            const dateValues = measurementsByDate[date];
+            const hasAllParams = ratio.parameters.every(param => 
+              dateValues.hasOwnProperty(param)
+            );
+
+            if (hasAllParams) {
+              try {
+                let expression = '';
+                for (const comp of ratio.formulaComponents) {
+                  if (comp.type === 'parameter') {
+                    expression += dateValues[comp.value];
+                  } else if (comp.type === 'number') {
+                    expression += comp.value;
+                  } else if (comp.type === 'operator') {
+                    expression += ` ${comp.value} `;
+                  } else if (comp.type === 'parenthesis') {
+                    expression += comp.value;
+                  }
+                }
+                
+                const result = Function(`"use strict"; return (${expression})`)();
+                
+                if (!isNaN(result) && isFinite(result)) {
+                  newCalculations.push({
+                    id: `calc_${Date.now()}_${Math.random()}`,
+                    ratioId: ratio.id,
+                    ratioName: ratio.name,
+                    patientId: activePatientId,
+                    date,
+                    value: result,
+                    parameters: { ...dateValues },
+                    timestamp: Date.now()
+                  });
+                }
+              } catch (error) {
+                console.error(`Errore calcolo ${ratio.name}:`, error);
+              }
+            }
+          });
+        });
+
+        console.log(`✅ Calcolati ${newCalculations.length} ratios`);
+        setRatioCalculations(newCalculations);
+      }
+    };
+    
+    window.addEventListener('measurementsUpdated', handleMeasurementsUpdate);
+    
+    return () => {
+      window.removeEventListener('measurementsUpdated', handleMeasurementsUpdate);
+    };
+  }, [ratios]); // Dipende da ratios
+
   // Aggiungi nuovo ratio
   const addRatio = (ratio) => {
     const newRatio = {
@@ -104,14 +181,11 @@ export const RatioProvider = ({ children }) => {
     setRatios(ratios.map(r => r.id === id ? { ...r, ...updates } : r));
   };
 
-  // Elimina ratio (solo custom, non predefiniti)
+  // Elimina ratio
   const deleteRatio = (id) => {
-    const ratio = ratios.find(r => r.id === id);
-    if (ratio && !ratio.predefined) {
-      setRatios(ratios.filter(r => r.id !== id));
-      // Elimina anche i calcoli associati
-      setRatioCalculations(ratioCalculations.filter(c => c.ratioId !== id));
-    }
+    setRatios(ratios.filter(r => r.id !== id));
+    // Elimina anche i calcoli associati
+    setRatioCalculations(ratioCalculations.filter(c => c.ratioId !== id));
   };
 
   // Valuta formula con componenti
