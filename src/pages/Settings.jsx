@@ -50,7 +50,7 @@ const Settings = () => {
                   <div className="text-sm text-gray-600 mt-1 space-y-1">
                     <p>Unità di misura: <span className="font-semibold">{param.unit}</span></p>
                     <p>Range standard: <span className="font-semibold">{param.standardRange.min} - {param.standardRange.max}</span></p>
-                    <p>Formula personalizzata: <span className="font-semibold">{param.customFormula}</span></p>
+                    <p className="text-xs text-gray-500 italic">Range personalizzato calcolato automaticamente dal setpoint</p>
                   </div>
                 </div>
               </div>

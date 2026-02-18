@@ -1,10 +1,43 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Users } from 'lucide-react';
+import { usePatients } from '../context/PatientContext';
 import MeasurementForm from '../components/MeasurementForm';
-import MeasurementList from '../components/MeasurementList';
+import StatusOverview from '../components/StatusOverview';
 import DataManager from '../components/DataManager';
 import Chart from '../components/Chart';
 
 const Dashboard = () => {
+  const [selectedParameter, setSelectedParameter] = useState('Glicemia');
+  const navigate = useNavigate();
+  const { getActivePatient } = usePatients();
+  const activePatient = getActivePatient();
+
+  // Se nessun paziente selezionato, mostra messaggio
+  if (!activePatient) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center w-24 h-24 bg-gray-100 rounded-full mb-6">
+            <Users size={48} className="text-gray-400" />
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900 mb-3">
+            Nessun paziente selezionato
+          </h2>
+          <p className="text-lg text-gray-600 mb-8 max-w-md mx-auto">
+            Seleziona un paziente dalla lista per visualizzare e gestire i suoi dati medici
+          </p>
+          <button
+            onClick={() => navigate('/patients')}
+            className="btn btn-primary text-lg px-8 py-3"
+          >
+            Vai alla Lista Pazienti
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
       <div className="mb-6 sm:mb-8">
@@ -21,12 +54,18 @@ const Dashboard = () => {
         <div className="lg:col-span-1 space-y-4 sm:space-y-6">
           <MeasurementForm />
           <DataManager />
-          <MeasurementList />
+          <StatusOverview 
+            selectedParameter={selectedParameter}
+            onParameterChange={setSelectedParameter}
+          />
         </div>
 
         {/* Area principale */}
         <div className="lg:col-span-2">
-          <Chart />
+          <Chart 
+            selectedParameter={selectedParameter}
+            onParameterChange={setSelectedParameter}
+          />
         </div>
       </div>
 

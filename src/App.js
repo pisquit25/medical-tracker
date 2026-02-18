@@ -5,29 +5,29 @@ import { PatientProvider } from './context/PatientContext';
 import { RatioProvider } from './context/RatioContext';
 import Header from './components/Header';
 import Dashboard from './pages/Dashboard';
-import Analytics from './pages/Analytics';
-import Ratio from './pages/Ratio';
 import Patients from './pages/Patients';
+import Ratio from './pages/Ratio';
+import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 
 function App() {
   return (
     <PatientProvider>
       <MedicalProvider>
-        <RatioProvider>
-          <Router>
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-              <Header />
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/analytics" element={<Analytics />} />
-                <Route path="/ratio" element={<Ratio />} />
-                <Route path="/patients" element={<Patients />} />
-                <Route path="/settings" element={<Settings />} />
-              </Routes>
-            </div>
-          </Router>
-        </RatioProvider>
+	  <RatioProvider>  
+        <Router>
+          <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+            <Header />
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/patients" element={<Patients />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/settings" element={<Settings />} />
+			  <Route path="/ratio" element={<Ratio />} />
+            </Routes>
+          </div>
+        </Router>
+		</RatioProvider>
       </MedicalProvider>
     </PatientProvider>
   );

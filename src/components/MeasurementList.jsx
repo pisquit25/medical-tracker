@@ -75,6 +75,11 @@ const MeasurementList = () => {
                         year: 'numeric'
                       })}
                     </div>
+                    {m.notes && (
+                      <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600 border-l-2 border-blue-400">
+                        <span className="font-semibold">📝</span> {m.notes}
+                      </div>
+                    )}
                   </div>
                   
                   <div className="flex gap-2 flex-shrink-0">
