@@ -9,7 +9,7 @@ import RatioFormulaBuilder from '../components/RatioFormulaBuilder';
 import InfoTooltip from '../components/InfoTooltip';
 
 const Ratio = () => {
-  const { ratios, ratioCalculations, recalculateRatios, getRatioCalculations } = useRatio();
+  const { ratios, recalculateRatios, getRatioCalculations } = useRatio();
   const { measurements } = useMedical();
   const { getActivePatient } = usePatients();
   const activePatient = getActivePatient();

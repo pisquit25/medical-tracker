@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Plus, Trash2, Save, AlertCircle, Check } from 'lucide-react';
+import { X, Plus, Trash2, Save, AlertCircle } from 'lucide-react';
 import { useRatio } from '../context/RatioContext';
 import { useMedical } from '../context/MedicalContext';
 

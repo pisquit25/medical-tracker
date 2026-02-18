@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, TrendingDown, Minus, AlertCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
 import { useRatio } from '../context/RatioContext';
 
 const RatioCard = ({ ratio, latestCalculation, status, calculationsCount }) => {
