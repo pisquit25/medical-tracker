@@ -132,6 +132,7 @@ export const RatioProvider = ({ children }) => {
                   }
                 }
                 
+                // eslint-disable-next-line no-new-func
                 const result = Function(`"use strict"; return (${expression})`)();
                 
                 if (!isNaN(result) && isFinite(result)) {
