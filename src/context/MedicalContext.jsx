@@ -18,7 +18,8 @@ const defaultParameters = [
     unit: 'mg/dL',
     unitCategory: 'glucose',
     availableUnits: ['mg/dL', 'mmol/L'],
-    standardRange: { min: 70, max: 100 },
+    standardRange: { min: 70, max: 100 }, // Range default
+    rangeRules: [], // Array di range multipli con condizioni
     color: '#3b82f6'
   },
   { 
@@ -28,6 +29,7 @@ const defaultParameters = [
     unitCategory: 'generic',
     availableUnits: ['mm/h'],
     standardRange: { min: 0, max: 20 },
+    rangeRules: [],
     color: '#8b5cf6'
   },
   { 
@@ -197,6 +199,57 @@ export const MedicalProvider = ({ children }) => {
     });
   };
 
+  // Seleziona il range standard appropriato in base al paziente
+  const getApplicableRange = (parameter, patient) => {
+    // Se non ci sono range rules, usa il default
+    if (!parameter.rangeRules || parameter.rangeRules.length === 0) {
+      return parameter.standardRange;
+    }
+
+    // Se non c'è paziente, usa default
+    if (!patient) {
+      return parameter.standardRange;
+    }
+
+    // Calcola età del paziente
+    const age = patient.dataNascita ? 
+      Math.floor((new Date() - new Date(patient.dataNascita)) / (365.25 * 24 * 60 * 60 * 1000)) : 
+      null;
+
+    // Cerca il range che matcha le condizioni del paziente
+    for (const rule of parameter.rangeRules) {
+      let matches = true;
+
+      // Controlla sesso se specificato
+      if (rule.conditions.sesso && patient.sesso) {
+        if (rule.conditions.sesso !== patient.sesso) {
+          matches = false;
+        }
+      }
+
+      // Controlla età se specificata
+      if (matches && rule.conditions.minAge !== undefined && age !== null) {
+        if (age < rule.conditions.minAge) {
+          matches = false;
+        }
+      }
+
+      if (matches && rule.conditions.maxAge !== undefined && age !== null) {
+        if (age > rule.conditions.maxAge) {
+          matches = false;
+        }
+      }
+
+      // Se tutte le condizioni matchano, usa questo range
+      if (matches) {
+        return rule.range;
+      }
+    }
+
+    // Nessuna regola matcha, usa il default
+    return parameter.standardRange;
+  };
+
   const calculateCustomRange = (parameterName, patientId = null) => {
     const paramMeasurements = measurements.filter(
       m => m.parameter === parameterName && 
@@ -305,6 +358,51 @@ export const MedicalProvider = ({ children }) => {
     });
   };
 
+  // Aggiungi una regola di range a un parametro
+  const addRangeRule = (parameterId, rule) => {
+    setParameters(params => params.map(p => {
+      if (p.id === parameterId) {
+        const rangeRules = p.rangeRules || [];
+        return {
+          ...p,
+          rangeRules: [...rangeRules, { 
+            id: `rule_${Date.now()}`,
+            ...rule 
+          }]
+        };
+      }
+      return p;
+    }));
+  };
+
+  // Aggiorna una regola di range
+  const updateRangeRule = (parameterId, ruleId, updates) => {
+    setParameters(params => params.map(p => {
+      if (p.id === parameterId) {
+        return {
+          ...p,
+          rangeRules: (p.rangeRules || []).map(r => 
+            r.id === ruleId ? { ...r, ...updates } : r
+          )
+        };
+      }
+      return p;
+    }));
+  };
+
+  // Elimina una regola di range
+  const deleteRangeRule = (parameterId, ruleId) => {
+    setParameters(params => params.map(p => {
+      if (p.id === parameterId) {
+        return {
+          ...p,
+          rangeRules: (p.rangeRules || []).filter(r => r.id !== ruleId)
+        };
+      }
+      return p;
+    }));
+  };
+
   const value = {
     parameters,
     measurements,
@@ -318,7 +416,11 @@ export const MedicalProvider = ({ children }) => {
     calculateSetpoint,
     isOutlier,
     exportData,
-    importData
+    importData,
+    getApplicableRange,
+    addRangeRule,
+    updateRangeRule,
+    deleteRangeRule
   };
 
   return (

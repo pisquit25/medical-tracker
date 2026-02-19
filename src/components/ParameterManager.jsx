@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, Save, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, Sliders } from 'lucide-react';
 import { useMedical } from '../context/MedicalContext';
 import { unitCategories, detectCategory, getAvailableUnits, getDefaultUnit } from '../utils/unitConversions';
+import RangeRuleManager from './RangeRuleManager';
 
 const ParameterManager = () => {
-  const { parameters, addParameter, updateParameter, deleteParameter } = useMedical();
+  const { parameters, addParameter, updateParameter, deleteParameter, addRangeRule, updateRangeRule, deleteRangeRule } = useMedical();
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [managingRangesFor, setManagingRangesFor] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     unitCategory: 'generic',
@@ -286,6 +288,11 @@ const ParameterManager = () => {
                       <span className="ml-2 font-semibold text-gray-900">
                         {param.standardRange.min} - {param.standardRange.max}
                       </span>
+                      {param.rangeRules && param.rangeRules.length > 0 && (
+                        <span className="ml-2 text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full font-semibold">
+                          + {param.rangeRules.length} range personalizzati
+                        </span>
+                      )}
                     </div>
                     <div>
                       <span className="text-gray-600">Formula Range Personalizzato:</span>
@@ -295,6 +302,13 @@ const ParameterManager = () => {
                 </div>
 
                 <div className="flex gap-2">
+                  <button
+                    onClick={() => setManagingRangesFor(param)}
+                    className="p-2 rounded-lg text-purple-600 hover:bg-purple-50 transition-all"
+                    title="Gestisci range multipli"
+                  >
+                    <Sliders size={18} />
+                  </button>
                   <button
                     onClick={() => startEdit(param)}
                     className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-all"
@@ -322,6 +336,17 @@ const ParameterManager = () => {
           tutte le misurazioni associate verranno perse in modo permanente.
         </p>
       </div>
+
+      {/* Range Rule Manager Modal */}
+      {managingRangesFor && (
+        <RangeRuleManager
+          parameter={managingRangesFor}
+          onAddRule={addRangeRule}
+          onUpdateRule={updateRangeRule}
+          onDeleteRule={deleteRangeRule}
+          onClose={() => setManagingRangesFor(null)}
+        />
+      )}
     </div>
   );
 };
