@@ -4,7 +4,7 @@ import { useRatio } from '../context/RatioContext';
 import RatioFormulaBuilder from './RatioFormulaBuilder';
 
 const RatioManager = () => {
-  const { ratios, deleteRatio, updateRatio } = useRatio();
+  const { ratios, deleteRatio } = useRatio();
   const [showBuilder, setShowBuilder] = useState(false);
   const [editingRatio, setEditingRatio] = useState(null);
   const [expandedRatios, setExpandedRatios] = useState({});
