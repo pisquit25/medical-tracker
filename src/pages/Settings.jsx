@@ -2,6 +2,7 @@ import React from 'react';
 import { useMedical } from '../context/MedicalContext';
 import { Info, AlertCircle, Trash2 } from 'lucide-react';
 import ParameterManager from '../components/ParameterManager';
+import RatioManager from '../components/RatioManager';
 
 const Settings = () => {
   const { measurements, parameters } = useMedical();
@@ -20,12 +21,15 @@ const Settings = () => {
           Impostazioni
         </h1>
         <p className="text-gray-600">
-          Gestisci parametri, visualizza statistiche e configura l'app
+          Gestisci parametri, rapporti, visualizza statistiche e configura l'app
         </p>
       </div>
 
-      {/* Gestione Parametri - NUOVO */}
+      {/* Gestione Parametri */}
       <ParameterManager />
+
+      {/* Gestione Rapporti - NUOVO */}
+      <RatioManager />
 
       {/* Parametri configurati */}
       <div className="card mb-6 mt-6 animate-slide-in" style={{ animationDelay: '0.2s' }}>

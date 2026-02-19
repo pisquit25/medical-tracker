@@ -3,18 +3,20 @@ import { X, Plus, Trash2, Save, AlertCircle } from 'lucide-react';
 import { useRatio } from '../context/RatioContext';
 import { useMedical } from '../context/MedicalContext';
 
-const RatioFormulaBuilder = ({ onClose, existingRatios }) => {
+const RatioFormulaBuilder = ({ onClose, existingRatios, editingRatio }) => {
   const { parameters } = useMedical();
-  const { addRatio, validateFormula, buildFormulaString } = useRatio();
+  const { addRatio, updateRatio, validateFormula, buildFormulaString } = useRatio();
 
-  const [ratioName, setRatioName] = useState('');
-  const [ratioDescription, setRatioDescription] = useState('');
-  const [ratioUnit, setRatioUnit] = useState('');
-  const [rangeMin, setRangeMin] = useState('');
-  const [rangeMax, setRangeMax] = useState('');
-  const [formulaComponents, setFormulaComponents] = useState([]);
+  const [ratioName, setRatioName] = useState(editingRatio?.name || '');
+  const [ratioDescription, setRatioDescription] = useState(editingRatio?.description || '');
+  const [ratioUnit, setRatioUnit] = useState(editingRatio?.unit || '');
+  const [rangeMin, setRangeMin] = useState(editingRatio?.standardRange?.min?.toString() || '');
+  const [rangeMax, setRangeMax] = useState(editingRatio?.standardRange?.max?.toString() || '');
+  const [formulaComponents, setFormulaComponents] = useState(editingRatio?.formulaComponents || []);
   const [error, setError] = useState('');
   const [showPalette, setShowPalette] = useState(true);
+
+  const isEditMode = !!editingRatio;
 
   // Operatori disponibili
   const operators = ['+', '-', '*', '/'];
@@ -74,8 +76,8 @@ const RatioFormulaBuilder = ({ onClose, existingRatios }) => {
       return;
     }
 
-    // Crea ratio
-    const newRatio = {
+    // Crea/Aggiorna ratio
+    const ratioData = {
       name: ratioName.trim(),
       description: ratioDescription.trim() || undefined,
       unit: ratioUnit.trim() || undefined,
@@ -86,10 +88,17 @@ const RatioFormulaBuilder = ({ onClose, existingRatios }) => {
       formula: buildFormulaString(formulaComponents),
       formulaComponents,
       parameters: usedParameters,
-      color: '#8b5cf6'
+      color: editingRatio?.color || '#8b5cf6'
     };
 
-    addRatio(newRatio);
+    if (isEditMode) {
+      // Modalità modifica
+      updateRatio(editingRatio.id, ratioData);
+    } else {
+      // Modalità creazione
+      addRatio(ratioData);
+    }
+    
     onClose();
   };
 
@@ -100,7 +109,9 @@ const RatioFormulaBuilder = ({ onClose, existingRatios }) => {
       <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Nuovo Rapporto Parametrico</h2>
+          <h2 className="text-2xl font-bold text-gray-900">
+            {isEditMode ? 'Modifica Rapporto Parametrico' : 'Nuovo Rapporto Parametrico'}
+          </h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
