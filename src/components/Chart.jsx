@@ -4,7 +4,7 @@ import { useMedical } from '../context/MedicalContext';
 import { usePatients } from '../context/PatientContext';
 
 const Chart = ({ selectedParameter, onParameterChange }) => {
-  const { parameters, measurements, calculateCustomRange } = useMedical();
+  const { parameters, measurements, calculateCustomRange, getApplicableRange } = useMedical();
   const { getActivePatient } = usePatients();
   const activePatient = getActivePatient();
   
@@ -27,6 +27,9 @@ const Chart = ({ selectedParameter, onParameterChange }) => {
   };
 
   const parameter = parameters.find(p => p.name === currentParameter);
+  const applicableRange = parameter && activePatient ? 
+    getApplicableRange(parameter, activePatient) : 
+    parameter?.standardRange;
   const customRange = calculateCustomRange(currentParameter, activePatient?.id);
 
   // Filtra misurazioni per paziente attivo
@@ -52,9 +55,9 @@ const Chart = ({ selectedParameter, onParameterChange }) => {
     let minValue = Math.min(...values);
     let maxValue = Math.max(...values);
     
-    if (showStandardRange && parameter?.standardRange) {
-      minValue = Math.min(minValue, parameter.standardRange.min);
-      maxValue = Math.max(maxValue, parameter.standardRange.max);
+    if (showStandardRange && applicableRange) {
+      minValue = Math.min(minValue, applicableRange.min);
+      maxValue = Math.max(maxValue, applicableRange.max);
     }
 
     if (showCustomRange && customRange) {
@@ -72,13 +75,22 @@ const Chart = ({ selectedParameter, onParameterChange }) => {
     const data = payload[0].payload;
     const value = data.value;
     
+    // Formatta valore per evitare .99999
+    const formatValue = (val) => {
+      // Se è un numero intero o molto vicino, mostralo senza decimali
+      if (Math.abs(val - Math.round(val)) < 0.01) {
+        return Math.round(val);
+      }
+      // Altrimenti 2 decimali max
+      return Number(val.toFixed(2));
+    };
+    
     // Determina colore in base ai range (logica semaforo)
-    const standardRange = parameter?.standardRange;
     let inStandardRange = false;
     let inCustomRange = false;
     
-    if (standardRange) {
-      inStandardRange = value >= standardRange.min && value <= standardRange.max;
+    if (applicableRange) {
+      inStandardRange = value >= applicableRange.min && value <= applicableRange.max;
     }
     
     if (customRange) {
@@ -104,7 +116,7 @@ const Chart = ({ selectedParameter, onParameterChange }) => {
       <div className="bg-white p-4 rounded-lg shadow-xl border-2" style={{ borderColor: valueColor }}>
         <p className="font-bold text-gray-900 mb-1">{data.fullDate}</p>
         <p className="text-2xl font-bold" style={{ color: valueColor }}>
-          {data.value} {parameter?.unit}
+          {formatValue(data.value)} {parameter?.unit}
         </p>
         <p className="text-xs font-semibold mt-1" style={{ color: valueColor }}>
           {statusLabel}
@@ -119,13 +131,13 @@ const Chart = ({ selectedParameter, onParameterChange }) => {
         )}
         {/* Indicator ranges */}
         <div className="mt-2 pt-2 border-t border-gray-200 text-xs space-y-1">
-          {standardRange && (
+          {applicableRange && (
             <div className="flex items-center gap-1">
               <span className={inStandardRange ? 'text-green-600' : 'text-red-600'}>
                 {inStandardRange ? '✓' : '✗'}
               </span>
               <span className="text-gray-600">
-                Range Std: {standardRange.min}-{standardRange.max}
+                Range Std: {applicableRange.min}-{applicableRange.max}
               </span>
             </div>
           )}
@@ -205,6 +217,13 @@ const Chart = ({ selectedParameter, onParameterChange }) => {
                 domain={getYAxisDomain()}
                 stroke="#6b7280"
                 style={{ fontSize: '12px' }}
+                tickFormatter={(value) => {
+                  // Formatta evitando .99999
+                  if (Math.abs(value - Math.round(value)) < 0.01) {
+                    return Math.round(value);
+                  }
+                  return Number(value.toFixed(1));
+                }}
                 label={{ 
                   value: parameter?.unit, 
                   angle: -90, 
@@ -215,10 +234,10 @@ const Chart = ({ selectedParameter, onParameterChange }) => {
               <Tooltip content={<CustomTooltip />} />
               <Legend />
 
-              {showStandardRange && parameter?.standardRange && (
+              {showStandardRange && applicableRange && (
                 <ReferenceArea
-                  y1={parameter.standardRange.min}
-                  y2={parameter.standardRange.max}
+                  y1={applicableRange.min}
+                  y2={applicableRange.max}
                   fill="#10b981"
                   fillOpacity={0.15}
                   label={{
@@ -271,17 +290,19 @@ const Chart = ({ selectedParameter, onParameterChange }) => {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {showStandardRange && parameter?.standardRange && (
+        {showStandardRange && applicableRange && (
           <div className="p-4 bg-emerald-50 rounded-lg border-2 border-emerald-200">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-3 h-3 rounded-full bg-emerald-500" />
               <h4 className="font-bold text-emerald-900">Range Standard</h4>
             </div>
             <p className="text-sm text-emerald-800 font-semibold">
-              {parameter.standardRange.min} - {parameter.standardRange.max} {parameter.unit}
+              {applicableRange.min} - {applicableRange.max} {parameter.unit}
             </p>
             <p className="text-xs text-emerald-700 mt-1">
-              Valori di riferimento popolazione generale
+              {activePatient && (applicableRange.min !== parameter.standardRange.min || applicableRange.max !== parameter.standardRange.max) 
+                ? `Range specifico per ${activePatient.sesso === 'M' ? 'maschio' : 'femmina'}`
+                : 'Valori di riferimento popolazione generale'}
             </p>
           </div>
         )}

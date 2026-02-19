@@ -165,20 +165,24 @@ const ParameterManager = () => {
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Unità di Misura Predefinita *
               </label>
-              <select
+              <input
+                type="text"
+                list="unit-options"
                 value={formData.unit}
                 onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
                 className="input"
+                placeholder="Scrivi o seleziona (es: mg/dL)"
                 required
-              >
+              />
+              <datalist id="unit-options">
                 {availableUnitsForCategory.map(unit => (
                   <option key={unit.value} value={unit.value}>
-                    {unit.label} {unit.isDefault ? '(predefinita)' : ''}
+                    {unit.label}
                   </option>
                 ))}
-              </select>
+              </datalist>
               <p className="text-xs text-gray-500 mt-1">
-                📊 Unità disponibili: {availableUnitsForCategory.map(u => u.label).join(', ')}
+                💡 Puoi scrivere un'unità personalizzata o scegliere tra: {availableUnitsForCategory.map(u => u.label).join(', ')}
               </p>
             </div>
 
