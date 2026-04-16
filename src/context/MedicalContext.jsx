@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { calculateSetpoint as calculateSetpointHybrid } from '../utils/setpointCalculator';
+import { calculateZScoreIQR, getZScoreStatus } from '../utils/robustStatistics';
 
 const MedicalContext = createContext();
 
@@ -403,6 +404,30 @@ export const MedicalProvider = ({ children }) => {
     }));
   };
 
+  // Calcola z-score personalizzato per un valore (solo se < 20 misurazioni, metodo IQR)
+  const calculateZScoreForValue = (measurementValue, parameterName, patientId = null) => {
+    const paramMeasurements = measurements.filter(
+      m => m.parameter === parameterName &&
+           (!patientId || m.patientId === patientId) &&
+           m.includedInFormula !== false
+    );
+
+    // Solo per < 20 misurazioni (metodo IQR)
+    if (paramMeasurements.length < 5 || paramMeasurements.length >= 20) {
+      return null;
+    }
+
+    const historicalValues = paramMeasurements.map(m => m.value);
+    const result = calculateZScoreIQR(measurementValue, historicalValues);
+    if (!result.isValid) return null;
+
+    return {
+      ...result,
+      status: getZScoreStatus(result.zScore),
+      nValues: historicalValues.length
+    };
+  };
+
   const value = {
     parameters,
     measurements,
@@ -414,6 +439,7 @@ export const MedicalProvider = ({ children }) => {
     toggleIncludeInFormula,
     calculateCustomRange,
     calculateSetpoint,
+    calculateZScoreForValue,
     isOutlier,
     exportData,
     importData,
