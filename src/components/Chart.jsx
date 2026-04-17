@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from 'recharts';
 import { useMedical } from '../context/MedicalContext';
 import { usePatients } from '../context/PatientContext';
+import { calculateZScoreIQR, getZScoreStatus } from '../utils/robustStatistics';
 
 const Chart = ({ selectedParameter, onParameterChange }) => {
   const { parameters, measurements, calculateCustomRange, getApplicableRange } = useMedical();
@@ -33,20 +34,45 @@ const Chart = ({ selectedParameter, onParameterChange }) => {
   const customRange = calculateCustomRange(currentParameter, activePatient?.id);
 
   // Filtra misurazioni per paziente attivo
-  const chartData = measurements
-    .filter(m => 
-      m.parameter === currentParameter &&
-      m.patientId === activePatient?.id
-    )
+  const allMeasurements = measurements.filter(m => 
+    m.parameter === currentParameter &&
+    m.patientId === activePatient?.id
+  );
+  
+  const includedMeasurements = allMeasurements.filter(m => m.includedInFormula !== false);
+  const useZScore = includedMeasurements.length < 20;
+  
+  const chartData = allMeasurements
     .sort((a, b) => new Date(a.date) - new Date(b.date))
-    .map(m => ({
-      date: new Date(m.date).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }),
-      fullDate: m.date,
-      value: m.value,
-      id: m.id,
-      includedInFormula: m.includedInFormula,
-      notes: m.notes || ''
-    }));
+    .map((m, index) => {
+      let zScoreResult = null;
+      let zScoreStatus = null;
+      
+      // Calcola Z-score se < 20 misurazioni
+      if (useZScore && includedMeasurements.length >= 3) {
+        const historicalValues = includedMeasurements
+          .filter(hm => hm.id !== m.id && hm.includedInFormula !== false)
+          .map(hm => hm.value);
+        
+        if (historicalValues.length >= 3) {
+          zScoreResult = calculateZScoreIQR(m.value, historicalValues);
+          if (zScoreResult.isValid) {
+            zScoreStatus = getZScoreStatus(zScoreResult.zScore);
+          }
+        }
+      }
+      
+      return {
+        date: new Date(m.date).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }),
+        fullDate: m.date,
+        value: m.value,
+        id: m.id,
+        includedInFormula: m.includedInFormula,
+        notes: m.notes || '',
+        zScore: zScoreResult?.zScore,
+        zScoreStatus: zScoreStatus?.level
+      };
+    });
 
   const getYAxisDomain = () => {
     if (chartData.length === 0) return [0, 100];
@@ -85,7 +111,23 @@ const Chart = ({ selectedParameter, onParameterChange }) => {
       return Number(val.toFixed(2));
     };
     
-    // Determina colore in base ai range (logica semaforo)
+    // Calcola Z-score se < 20 misurazioni incluse
+    const includedMeasurements = chartData.filter(m => m.includedInFormula !== false);
+    const historicalValues = includedMeasurements
+      .filter(m => m.id !== data.id) // Escludi il valore corrente
+      .map(m => m.value);
+    
+    let zScoreResult = null;
+    let zScoreStatus = null;
+    
+    if (includedMeasurements.length < 20 && historicalValues.length >= 3) {
+      zScoreResult = calculateZScoreIQR(value, historicalValues);
+      if (zScoreResult.isValid) {
+        zScoreStatus = getZScoreStatus(zScoreResult.zScore);
+      }
+    }
+    
+    // Determina colore in base ai range O z-score
     let inStandardRange = false;
     let inCustomRange = false;
     
@@ -97,19 +139,31 @@ const Chart = ({ selectedParameter, onParameterChange }) => {
       inCustomRange = value >= customRange.min && value <= customRange.max;
     }
     
-    // Logica semaforo:
-    // Verde: dentro entrambi i range
-    // Arancione: dentro un solo range
-    // Rosso: fuori da entrambi
+    // Logica semaforo con priorità Z-score se disponibile
     let valueColor = '#ef4444'; // Rosso default
     let statusLabel = 'Fuori Range';
     
-    if (inStandardRange && inCustomRange) {
-      valueColor = '#22c55e'; // Verde
-      statusLabel = 'Ottimale';
-    } else if (inStandardRange || inCustomRange) {
-      valueColor = '#f59e0b'; // Arancione
-      statusLabel = 'Attenzione';
+    if (zScoreStatus) {
+      // Usa colori Z-score se disponibile
+      if (zScoreStatus.level === 'green') {
+        valueColor = '#22c55e';
+        statusLabel = 'Nella Norma (Z-score)';
+      } else if (zScoreStatus.level === 'orange') {
+        valueColor = '#f59e0b';
+        statusLabel = 'Attenzione (Z-score)';
+      } else {
+        valueColor = '#ef4444';
+        statusLabel = 'Anomalo (Z-score)';
+      }
+    } else {
+      // Fallback a logica range standard
+      if (inStandardRange && inCustomRange) {
+        valueColor = '#22c55e'; // Verde
+        statusLabel = 'Ottimale';
+      } else if (inStandardRange || inCustomRange) {
+        valueColor = '#f59e0b'; // Arancione
+        statusLabel = 'Attenzione';
+      }
     }
     
     return (
@@ -121,6 +175,24 @@ const Chart = ({ selectedParameter, onParameterChange }) => {
         <p className="text-xs font-semibold mt-1" style={{ color: valueColor }}>
           {statusLabel}
         </p>
+        
+        {/* Z-score se disponibile */}
+        {zScoreResult && zScoreResult.isValid && (
+          <div className="mt-2 pt-2 border-t border-gray-200">
+            <div className={`px-2 py-1 rounded text-xs font-semibold ${zScoreStatus.bg} ${zScoreStatus.color} ${zScoreStatus.border} border`}>
+              Z-score: {zScoreResult.zScore.toFixed(2)} - {zScoreStatus.label}
+            </div>
+            <p className="text-xs text-gray-600 mt-1">
+              Mediana: {zScoreResult.median} | IQR: {zScoreResult.iqr}
+            </p>
+            {zScoreResult.outliersCount > 0 && (
+              <p className="text-xs text-gray-500">
+                ({zScoreResult.outliersCount} outlier esclusi)
+              </p>
+            )}
+          </div>
+        )}
+        
         {data.notes && (
           <div className="mt-2 pt-2 border-t border-gray-200">
             <p className="text-xs text-gray-600">
@@ -153,6 +225,37 @@ const Chart = ({ selectedParameter, onParameterChange }) => {
           )}
         </div>
       </div>
+    );
+  };
+
+  // Custom dot renderer basato su Z-score
+  const renderCustomDot = (props) => {
+    const { cx, cy, payload } = props;
+    
+    if (!payload) return null;
+    
+    let fillColor = parameter?.color || '#3b82f6';
+    
+    // Se abbiamo Z-score, usa colori semaforo
+    if (payload.zScoreStatus) {
+      if (payload.zScoreStatus === 'green') {
+        fillColor = '#22c55e'; // Verde
+      } else if (payload.zScoreStatus === 'orange') {
+        fillColor = '#f59e0b'; // Arancione
+      } else if (payload.zScoreStatus === 'red') {
+        fillColor = '#ef4444'; // Rosso
+      }
+    }
+    
+    return (
+      <circle
+        cx={cx}
+        cy={cy}
+        r={5}
+        fill={fillColor}
+        stroke="#fff"
+        strokeWidth={2}
+      />
     );
   };
 
@@ -267,12 +370,7 @@ const Chart = ({ selectedParameter, onParameterChange }) => {
                 dataKey="value"
                 stroke={parameter?.color || '#3b82f6'}
                 strokeWidth={3}
-                dot={{ 
-                  fill: parameter?.color || '#3b82f6', 
-                  r: 5,
-                  strokeWidth: 2,
-                  stroke: '#fff'
-                }}
+                dot={renderCustomDot}
                 activeDot={{ r: 8 }}
                 name={parameter?.name}
               />
@@ -324,6 +422,36 @@ const Chart = ({ selectedParameter, onParameterChange }) => {
             </p>
             <p className="text-xs text-amber-700">
               Basato su {measurements.filter(m => m.parameter === currentParameter && m.includedInFormula && m.patientId === activePatient?.id).length} misurazioni
+            </p>
+          </div>
+        )}
+        
+        {/* Z-score Legend quando < 20 misurazioni */}
+        {useZScore && includedMeasurements.length >= 3 && (
+          <div className="p-4 bg-purple-50 rounded-lg border-2 border-purple-200">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-3 h-3 rounded-full bg-purple-500" />
+              <h4 className="font-bold text-purple-900">Z-score (IQR)</h4>
+            </div>
+            <p className="text-sm text-purple-800 font-semibold mb-2">
+              Analisi robusta con {includedMeasurements.length} misurazioni
+            </p>
+            <div className="space-y-1 text-xs">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-500" />
+                <span className="text-gray-700">Verde: Z-score ≤ 2 (Nella norma)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-orange-500" />
+                <span className="text-gray-700">Arancione: 2 &lt; Z-score ≤ 3 (Attenzione)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-500" />
+                <span className="text-gray-700">Rosso: Z-score &gt; 3 (Anomalo)</span>
+              </div>
+            </div>
+            <p className="text-xs text-purple-700 mt-2">
+              Formula: (x - mediana) / (IQR / 1.35)
             </p>
           </div>
         )}
