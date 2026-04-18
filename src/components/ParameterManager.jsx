@@ -218,7 +218,7 @@ const ParameterManager = () => {
 
             <div className="md:col-span-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-800">
-                ℹ️ <strong>Range Personalizzato Automatico:</strong> Verrà calcolato automaticamente dal setpoint individuale del paziente usando il metodo ibrido (Media Robusta &lt; 20 misurazioni, GMM ≥ 20 misurazioni) con formula fissa: <strong>Setpoint ± 1.5×SD</strong>
+                ℹ️ <strong>Range Personalizzato Automatico:</strong> Verrà calcolato automaticamente dal setpoint individuale del paziente usando il metodo ibrido (Media Robusta &lt; 20 misurazioni, GMM ≥ 20 misurazioni) con formula fissa: <strong>Setpoint ± 2.0×SD</strong>
               </p>
             </div>
           </div>
@@ -300,7 +300,7 @@ const ParameterManager = () => {
                     </div>
                     <div>
                       <span className="text-gray-600">Formula Range Personalizzato:</span>
-                      <span className="ml-2 font-semibold text-primary-600">Setpoint ± 1.5×SD (automatico)</span>
+                      <span className="ml-2 font-semibold text-primary-600">Setpoint ± 2.0×SD (automatico)</span>
                     </div>
                   </div>
                 </div>

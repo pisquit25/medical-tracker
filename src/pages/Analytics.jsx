@@ -312,7 +312,7 @@ const Analytics = () => {
                           <InfoTooltip title="Barra Range Personalizzato" position="bottom">
                             La <strong>barra blu</strong> mostra graficamente il tuo range personalizzato calcolato dal setpoint:
                             <div className="mt-2 text-xs">
-                              <strong>Formula:</strong> Setpoint ± 1.5×SD
+                              <strong>Formula:</strong> Setpoint ± 2.0×SD
                             </div>
                             <div className="mt-2 text-xs">
                               <strong>Metodo:</strong> {customRange.method === 'gmm' ? 'Gaussian Mixture Model' : 'Media Robusta (IQR)'}

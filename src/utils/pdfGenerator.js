@@ -158,8 +158,8 @@ export const generatePatientPDF = (patient, measurements, parameters, visits = [
       if (setpointResult && !setpointResult.error) {
         const { setpoint, std, methodUsed } = setpointResult;
         
-        // Multiplier FISSO a 1.5
-        const multiplier = 1.5;
+        // Multiplier FISSO a 2.0
+        const multiplier = 2.0;
         
         customRange = {
           min: setpoint - multiplier * std,

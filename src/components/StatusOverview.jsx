@@ -4,7 +4,7 @@ import { useMedical } from '../context/MedicalContext';
 import { usePatients } from '../context/PatientContext';
 
 const StatusOverview = ({ selectedParameter, onParameterChange }) => {
-  const { measurements, parameters, calculateCustomRange, removeMeasurement, isOutlier, calculateZScoreForValue } = useMedical();
+  const { measurements, parameters, calculateCustomRange, removeMeasurement, isOutlier } = useMedical();
   const { getActivePatient } = usePatients();
   const activePatient = getActivePatient();
   
@@ -190,24 +190,11 @@ const StatusOverview = ({ selectedParameter, onParameterChange }) => {
         ) : (
           parameterMeasurements.map((item, index) => {
             const { measurement, parameter, status } = item;
-            
-            // Calcola z-score personalizzato (solo se < 20 misurazioni, metodo IQR)
-            const activePatientId = activePatient?.id;
-            const zScoreResult = calculateZScoreForValue(measurement.value, parameter.name, activePatientId);
-            const hasZScore = zScoreResult && zScoreResult.status;
-            
-            // Colore del valore: se disponibile z-score, usa la legenda semaforica z-score
-            const valueColorClass = hasZScore
-              ? zScoreResult.status.color
-              : getStatusText(status.status);
-            const cardBgClass = hasZScore
-              ? `${zScoreResult.status.bg} border-${zScoreResult.status.level === 'green' ? 'green' : zScoreResult.status.level === 'orange' ? 'orange' : 'red'}-200 hover:border-${zScoreResult.status.level === 'green' ? 'green' : zScoreResult.status.level === 'orange' ? 'orange' : 'red'}-300`
-              : getStatusBg(status.status);
 
             return (
               <div
                 key={measurement.id}
-                className={`p-4 rounded-lg border-2 transition-all duration-200 ${cardBgClass}`}
+                className={`p-4 rounded-lg border-2 transition-all duration-200 ${getStatusBg(status.status)}`}
                 style={{ 
                   animationDelay: `${index * 0.05}s`,
                   borderLeftColor: parameter.color,
@@ -231,7 +218,7 @@ const StatusOverview = ({ selectedParameter, onParameterChange }) => {
 
                     {/* Valore misurazione */}
                     <div className="flex items-baseline gap-2 mb-2">
-                      <span className={`text-2xl font-bold ${valueColorClass}`}>
+                      <span className={`text-2xl font-bold ${getStatusText(status.status)}`}>
                         {measurement.value.toFixed(2)}
                       </span>
                       <span className="text-sm text-gray-600">
@@ -282,7 +269,7 @@ const StatusOverview = ({ selectedParameter, onParameterChange }) => {
                           <div className="w-3 h-3 rounded-full bg-blue-500"></div>
                           <span className="text-gray-700">
                             <span className="font-semibold">Range Personalizzato:</span> {customRange.min.toFixed(2)} - {customRange.max.toFixed(2)}
-                            <span className="text-xs text-gray-500 ml-1">(Setpoint ± 1.5×SD)</span>
+                            <span className="text-xs text-gray-500 ml-1">(Setpoint ± 2.0×SD)</span>
                           </span>
                           {measurement.value >= customRange.min && 
                            measurement.value <= customRange.max ? (
@@ -292,26 +279,6 @@ const StatusOverview = ({ selectedParameter, onParameterChange }) => {
                           )}
                         </div>
                       )}
-
-                      {/* Z-Score personalizzato (solo < 20 misurazioni, metodo IQR) */}
-                      {hasZScore && (
-                        <div className={`mt-2 p-2 rounded-lg border ${zScoreResult.status.bg} ${zScoreResult.status.border}`}>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-xs font-bold text-gray-700">📐 Z-Score IQR:</span>
-                            <span className={`text-sm font-extrabold ${zScoreResult.status.color}`}>
-                              {zScoreResult.zScore.toFixed(2)}
-                            </span>
-                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${zScoreResult.status.bg} ${zScoreResult.status.color} border ${zScoreResult.status.border}`}>
-                              {zScoreResult.status.label}
-                            </span>
-                          </div>
-                          <div className="mt-1 text-xs text-gray-500 space-y-0.5">
-                            <div>Mediana (post-filtro): <span className="font-medium text-gray-700">{zScoreResult.median}</span></div>
-                            <div>IQR: <span className="font-medium text-gray-700">{zScoreResult.iqr}</span> · Outlier esclusi: <span className="font-medium text-gray-700">{zScoreResult.outliersCount}</span> · N valori: <span className="font-medium text-gray-700">{zScoreResult.nValues}</span></div>
-                            <div className="text-gray-400 italic">Formula: (x − mediana) / (IQR / 1.35)</div>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </div>
 
@@ -319,24 +286,15 @@ const StatusOverview = ({ selectedParameter, onParameterChange }) => {
                   <div className="flex flex-col items-center gap-1">
                     <div 
                       className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                        hasZScore
-                          ? zScoreResult.status.level === 'green' ? 'bg-green-500'
-                            : zScoreResult.status.level === 'orange' ? 'bg-orange-500'
-                            : 'bg-red-500'
-                          : status.status === 'optimal' ? 'bg-green-500'
-                          : status.status === 'warning' ? 'bg-yellow-500'
-                          : 'bg-red-500'
+                        status.status === 'optimal' ? 'bg-green-500' :
+                        status.status === 'warning' ? 'bg-yellow-500' :
+                        'bg-red-500'
                       }`}
                     >
                       <span className="text-white text-xl font-bold">
-                        {hasZScore
-                          ? zScoreResult.status.level === 'green' ? '✓'
-                            : zScoreResult.status.level === 'orange' ? '!'
-                            : '✗'
-                          : status.status === 'optimal' ? '✓'
-                          : status.status === 'warning' ? '!'
-                          : '✗'
-                        }
+                        {status.status === 'optimal' ? '✓' :
+                         status.status === 'warning' ? '!' :
+                         '✗'}
                       </span>
                     </div>
 
@@ -372,8 +330,8 @@ const StatusOverview = ({ selectedParameter, onParameterChange }) => {
       {/* Legenda */}
       {parameterMeasurements.length > 0 && (
         <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <h4 className="font-semibold text-gray-700 mb-3 text-sm">Legenda Stati (Range Standard/Personalizzato):</h4>
-          <div className="space-y-2 text-xs mb-4">
+          <h4 className="font-semibold text-gray-700 mb-3 text-sm">Legenda Stati:</h4>
+          <div className="space-y-2 text-xs">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded bg-green-500"></div>
               <span className="font-semibold text-green-700">Verde (Ottimale):</span>
@@ -390,36 +348,6 @@ const StatusOverview = ({ selectedParameter, onParameterChange }) => {
               <span className="text-gray-600">Valore fuori da entrambi i range</span>
             </div>
           </div>
-
-          {/* Legenda Z-Score (solo se < 20 misurazioni) */}
-          {parameterMeasurements.some(item => {
-            const zs = calculateZScoreForValue(item.measurement.value, item.parameter.name, activePatient?.id);
-            return zs && zs.status;
-          }) && (
-            <div>
-              <h4 className="font-semibold text-gray-700 mb-2 text-sm">📐 Legenda Z-Score IQR (metodo attivo: &lt;20 misurazioni):</h4>
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-green-500"></div>
-                  <span className="font-semibold text-green-700">Verde (Nella norma):</span>
-                  <span className="text-gray-600">Z-Score ≤ 2 — valore coerente con la distribuzione storica</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-orange-500"></div>
-                  <span className="font-semibold text-orange-700">Arancione (Attenzione):</span>
-                  <span className="text-gray-600">Z-Score tra 2 e 3 — valore moderatamente insolito</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-red-500"></div>
-                  <span className="font-semibold text-red-700">Rosso (Anomalo):</span>
-                  <span className="text-gray-600">Z-Score &gt; 3 — valore molto lontano dalla distribuzione storica</span>
-                </div>
-                <div className="mt-1 p-2 bg-blue-50 rounded border border-blue-200 text-blue-700">
-                  ℹ️ Formula: Z = (x − mediana) / (IQR / 1.35) · Gli outlier sono preventivamente esclusi con IQR ± 1.5×IQR
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>
